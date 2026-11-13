@@ -1,358 +1,359 @@
-# GDScript Style Guide — Dragon Crystal
+# GDScript Style
 
-Last updated: 2026-11-13
+How GDScript is written in this project: Godot **4.7.2**, statically typed, tabs, clean under
+**gdtoolkit 4.5.0** (`gdformat` + `gdlint`, run by `bin/check.sh`).
 
-## 1. File Structure
+The short version agents load is the `gdscript-style` skill (`.opencode/skills/gdscript-style/`).
+This page is the long form, with the reasons. If the two ever disagree, the skill wins and this page
+gets fixed.
 
-Every `.gd` file starts with:
-```gdscript
-class_name ClassName    # Must match filename exactly (without .gd)
-extends Node            # or SceneTree, Node2D, etc.
+Last checked against the engine and tools: 2026-11-13. Every complete script on this page (each code
+block that starts with `extends`) was compiled by Godot 4.7.2 and passes `gdformat --check` and
+`gdlint`.
 
-## One-line purpose: what this class *manages*
-## NOT how it works — that goes on functions below
+---
 
-var constant_like_value := 42     # new-style type inference for locals
-```
-
-**Always** at the top: `class_name` matching filename, then `extends`, then a doc comment summarizing purpose in one sentence.
-
-## 2. Type Annotations
-
-### Parameters and Returns — Always explicit
-```gdscript
-# GOOD - every parameter typed, return type declared
-func find_item_by_type(item_type: Inventory.ItemType) -> InventoryItem?:
-    for item in inventory:
-        if item.type == item_type:
-            return item
-    return null
-
-# BAD - implicit returns (lint errors or warnings)
-func find_item(type: Inventory.ItemType):
-    pass
-
-# BAD - no parameters typed (harder to read intent)
-func add_item(item):
-    pass
-```
-
-### Inferred locals — new-style (`:=`) over old-style (`var x: Type = value`)
-```gdscript
-# GOOD - compiler infers type from initialization
-var step := 10              # inferred int
-var items := Array[Item]()  # generic array
-var data: Dictionary[StringName, float]  # explicit dict typing
-
-# BAD - redundant type annotation on init (old style)
-var step: int = 10          # works but is verbose
-```
-
-### Use generics consistently for arrays and dictionaries
-```gdscript
-# GOOD
-var enemies: Array[Enemy] = []
-var drops: Dictionary[StringName, float]  # drop rate per item type
-
-# BAD - untyped (lint error)
-var enemies: Array = []       # Array is the wrong type hint
-var drops: Dictionary = {}    # Ditto
-```
-
-## 3. Naming Conventions
-
-| Category | Convention | Example |
-|---|---|---|
-| class_name / file | PascalCase / snake_case | `GameState`, `game_state.gd` |
-| variables (pub) | snake_case | `max_hp`, `food_remaining` |
-| variables (priv) | _snake_case | `_current_room`, `_last_damage_time` |
-| constants | UPPER_SNAKE_CASE | `FOOD_PER_TURN = 1`, `MAX_LEVELS` |
-| Signals | snake_case (past tense / event name) — per [official Godot docs](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_styleguide.html#naming-conventions) | `score_changed`, `enemy_spawned` |
-| Enums | PascalCase class name, CONSTANT_CASE values — per [official Godot docs](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_styleguide.html#constants-and-enums) | `enum ItemType { HEAL, POISON }` |
-| Groups (scene) | snake_case plural | `enemies`, `floor_tiles`, `pickups` |
-| scenes files | snake_case | `player.tscn`, `hud.tscn` |
-
-**Special names:** Always use Godot's built-in constants when available. Never magic numbers for these:
-- Directional axes: `HORIZONTAL = Vector2.RIGHT.x` (don't hardcode `1`)
-- Gravity: `ProjectSettings.get("physics/2d/default_gravity")` not `980`
-
-## 4. Code Organization Within a File
-
-Order of declaration in every file **(always this order)** — matches the [official Godot order](https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_styleguide.html#code-order):
+## 1. File shape
 
 ```gdscript
-class_name ClassName
-extends NodeType
+extends Area2D
+## A coin. Adds VALUE to the score when the player walks into it, then disappears.
 
-## Doc summary
+signal collected(value: int)
 
-# --- 1. signals (come FIRST) ---
-signal score_changed
+enum State { IDLE, TAKEN }
 
-# --- 2. enums ---
-enum ItemType { HEAL, POISON, MAP }
+const VALUE := 10
 
-# --- constants & @export (top-level or editor-exposed) ---
-const MAX_LEVELS := 30
-@export var max_hp: int = 100
+@export var spin_speed := 2.0
 
-# --- member variables (all types explicit) ---
-var hp: int = max_hp
-var _private_cache := Array[String]()
+var state := State.IDLE
 
-# --- 5. @onready (cached node refs, set right before _ready()) ---
-@onready var health_bar: ProgressBar = $UI/HBar
+@onready var _body: Polygon2D = $Body
 
-# --- 6. Godot lifecycle hooks in order ---
-func _init() -> void: ...
-func _enter_tree() -> void: ...
-func _ready() -> void: ...
-func _process(delta: float) -> void: ...
-func _physics_process(delta: float) -> void: ...
-func _input(event: InputEvent) -> void: ...
-func _unhandled_key_input(event: InputEventKey) -> void: ...
 
-# --- 7. public methods (all typed signatures, doc comments for API) ---
-func add_item(item: InventoryItem) -> bool:
-    ## Add item to inventory if space available.
-    ## @return true if added, false if inventory full
-
-# --- 8. private methods (_ prefix) ---
-func _calculate_damage() -> int:
-    ...
-```
-
-**Rules:**
-- Order is strictly the one above. Signals → Enum → Const → @export → regular var → onready → lifecycle → public → private.
-- Group related variables with two blank lines between logical sections.
-- Two blank lines between consecutive function blocks.
-
-## 5. Indentation and Line Length
-
-| Rule | Value |
-|---|---|
-| Indentation | **Tabs** (never spaces) per Godot official style guide and gdformat rules |
-| Line length | Max ~90 characters. Break before operators not after assignment, or at commas in multiline calls |
-| Trailing whitespace | None — strip trailing whitespace |
-| Newlines between functions | Exactly two blank lines |
-
-```gdscript
-# GOOD - long lines broken at the dot operator
-var result := calculate_damage(
-    base_damage,
-    level_modifier,
-    enemy.resistance_type
-)
-
-# BAD - over-indented deeply
-func nested_function():
-    if condition:
-        for item in list:
-            print(item.value * 2.5 + extra_calculation())
-
-```
-
-## 6. Strings and Format Strings
-
-Prefer format strings (`%` or `%s`) over string concatenation:
-```gdscript
-# GOOD - format string (fast, readable)
-var msg := "Player hit for %d damage." % damage_amount
-
-# GOOD - for complex multi-value messages
-var report := "%(player)s took %(damage)d hits from %(enemy)s" % {
-    "player": player_name,
-    "damage": damage_amount,
-    "enemy": enemy.name,
-}
-
-# BAD - string concatenation (slow and ugly)
-var bad_msg := "Player hit for " + str(damage_amount) + " damage."
-```
-
-Use `str()` only for converting non-string values in error messages:
-```gdscript
-push_error("[GameState] Invalid floor: %s" % str(floor_number))
-```
-
-## 7. Collections and Iteration
-
-### Arrays - always with type parameters, never untyped
-```gdscript
-# GOOD - typed array
-var enemies := Array[Enemy]()
-enemies.append(new_enemy)               # append adds one element
-enemies += more_enemies                 # += works with other arrays
-
-# BAD - untyped (lint error on `for e in enemies` without type hint)
-var enemies: Array = []          # should be Array[Enemy]
-```
-
-### Dictionary iteration patterns
-```gdscript
-# GOOD - use built-in methods over manual index
-for key in values.keys():
-    ...
-
-for value in values.values():
-    ...
-
-for key, value in values:         # tuple unpacking (cleaner than [key])
-    ...
-
-# Checking existence with is_key() not `in` on keys()
-if values.is_key(target):        # O(1) vs iterating all keys
-    ...
-```
-
-### Avoid for loops with indices where possible
-```gdscript
-# GOOD - enumerate when you need position AND value
-var i := 0
-for item in items:
-    if item.is_valid:
-        do_thing(item, i)
-    i += 1
-
-# Even better - use an explicit index variable outside the loop for counters
-```
-
-## 8. Conditional and Branching Patterns
-
-### Use match over chained elif when there are multiple conditions on one variable
-```gdscript
-func describe_equipment(slot: Equipment.Slot) -> String:
-    match slot:
-        Equipment.Slot.HEAD: return "[Head]" + get_head_description()
-        Equipment.Slot.BODY: return "[Body]" + get_body_description()
-        _: return "[Unknown] " + str(slot)
-
-# If elif is fine too, but match is more readable with 3+ branches on the same variable
-```
-
-### Always use early returns to avoid deep nesting
-```gdscript
-func take_damage(amount: int) -> bool:
-    # Guard clause — exits early if no damage needed
-    if amount <= 0:
-        return false
-    
-    # Now we know amount > 0, so the rest is "happy path" logic
-    hp -= amount
-    if hp <= 0:
-        die()
-        return true
-    return false
-```
-
-### No parentheses around conditions in `if` / `for` — they are optional and generally discouraged
-```gdscript
-# GOOD - no parens
-if hp > 0:
-    attack(enemy)
-
-for item in inventory:
-    print_item(item.type)
-
-# BAD - unnecessary
-if (hp > 0):
-    ...
-```
-
-## 9. Godot-Specific Patterns
-
-### `_ready()` — light initialization only
-Think of it as `__init__` / `setup`. Load textures, connect signals during `_ready()`, but **never** start game logic here — that happens in a separate `start_game()` method called from the main scene.
-
-```gdscript
 func _ready() -> void:
-    # Only setup — no "if first_frame" patterns
-    var hud := $HUD as Control      # safe cast with 'as'
-    player = find_player_node()     # reference to another node in tree
-    
-    # Connect signals during ready
-    player.hp_changed.connect(_on_player_hp_changed)
+	body_entered.connect(_on_body_entered)
 
-func start_game() -> void:
-    # Heavy initialization — called from main scene after setup
-    load_floor(1)
-    reset_to_initial_state()
+
+func _process(delta: float) -> void:
+	_body.rotation += spin_speed * delta
+
+
+func _on_body_entered(body: Node2D) -> void:
+	if state == State.TAKEN or not body.is_in_group("player"):
+		return
+	state = State.TAKEN
+	collected.emit(VALUE)
+	queue_free()
 ```
 
-### Use `as` for safe casting in Godot 4+
+### Declaration order
+
+gdlint enforces the order of declarations (`class-definitions-order`), and the official style guide
+also orders methods. Together, top to bottom:
+
+| # | What | Enforced by |
+| --- | --- | --- |
+| 1 | `@tool`, `@icon`, `@static_unload` | gdlint |
+| 2 | `class_name` (only when needed, see below) | gdlint |
+| 3 | `extends` | gdlint |
+| 4 | `##` doc comment, one line saying what this is for | gdlint |
+| 5 | `signal`s | gdlint |
+| 6 | `enum`s | gdlint |
+| 7 | `const`s | gdlint |
+| 8 | `static var`s | gdlint |
+| 9 | `@export var`s | gdlint |
+| 10 | public `var`s, then `_private` vars | gdlint |
+| 11 | `@onready var`s, public then private | gdlint |
+| 12 | `_static_init()`, then other `static func`s | style guide |
+| 13 | built-in virtuals, in this order: `_init`, `_enter_tree`, `_ready`, `_process`, `_physics_process`, then the rest (`_input`, `_unhandled_input`, ...) | style guide |
+| 14 | public methods, then `_private` methods and signal handlers | style guide |
+| 15 | inner `class`es | style guide |
+
+gdlint treats every function as "others", so it does not catch functions in the wrong order.
+Reviewers do.
+
+### `class_name`: only when another script needs the type
+
+A `class_name` puts the name in the global namespace and in `.godot/global_script_class_cache.cfg`.
+Add one only when another script needs it as a type (`var target: Enemy`, `body is Enemy`) or
+calls its `static func`s. Otherwise, find nodes by group. Scene scripts in this repo
+(`player.gd`, `main.gd`) don't have one. Autoloads are already global by their autoload name
+(`GameState`), so they must **not** also declare a `class_name` with the same name; Godot rejects that.
+
+---
+
+## 2. Formatting
+
+| Rule | Value | Source |
+| --- | --- | --- |
+| Indentation | **Tabs**, one per level | style guide; gdlint `tab-characters: 1` |
+| Continuation lines | Two extra indent levels, or one inside brackets | style guide; gdformat decides |
+| Line length | **100** max (gdlint `max-line-length`); aim for 80 | gdlint default, style guide |
+| Between functions and classes | Exactly **two** blank lines | gdformat |
+| Trailing whitespace | None | gdlint |
+| File length | 1000 lines max | gdlint `max-file-lines` |
+| Quotes | Double quotes | style guide |
+| Boolean operators | `and` / `or` / `not`, not `&&` / `||` / `!` | style guide |
+| Comments | `# ` and `## ` with one space after | style guide |
+
+Don't hand-format. When the gate's `format` step fails, run `bin/format.sh`. It rewrites the files
+and is always safe.
+
+---
+
+## 3. Naming
+
+| Thing | Convention | Example |
+| --- | --- | --- |
+| Files (`.gd`, `.tscn`) | `snake_case` | `game_state.gd`, `coin.tscn` |
+| `class_name`, inner classes, node names | `PascalCase` | `Enemy`, `Player`, `HUD` |
+| Functions, variables, parameters | `snake_case` | `add_score()`, `max_health` |
+| Private members | leading `_` | `_taken`, `_spawn_one()` |
+| Signals | `snake_case`, past tense | `collected`, `health_changed` |
+| Signal handlers | `_on_<node>_<signal>` or `_on_<signal>` | `_on_body_entered` |
+| Constants, enum members | `CONSTANT_CASE` | `MAX_COINS`, `State.IDLE` |
+| Enum types | `PascalCase` | `enum State { ... }` |
+| `preload` constants | `PascalCase` or `CONSTANT_CASE` | `const CoinScene := preload(...)` |
+| Groups | `snake_case`, plural for collections | `coins`, `enemies`, `player` |
+| Input actions | `snake_case` verb | `move_left`, `dash` |
+
+These are the gdlint defaults (`gdlint -d` dumps them), and they match the official guide.
+
+---
+
+## 4. Static typing
+
+Type everything. Typed code runs faster, and it is the compiler's only way to catch an agent's
+mistakes before runtime.
+
 ```gdscript
-# GOOD - clean typing syntax (Godot 4.x)
-var sprite := $Character as Sprite2D
-var body := get_node("/root/GameState") as Node  # fallback if null
+var speed := 220.0  # inferred float: fine when the type is obvious on the line
+var target: Node2D = null  # explicit when the value doesn't show the type
+var hits: Array[int] = []
+var drops: Dictionary[StringName, float] = {}  # typed dictionaries: Godot 4.4+
 
-# BAD - old syntax
-var sprite := ($Character as StringName)  # wrong operator precedence
+
+func damage_for(level: int, bonus := 0) -> int:  # every parameter and return typed
+	return level * 2 + bonus
 ```
 
-### Never use `get_node("path/to/node")` with long strings — groups are your friend
+- **`:=` or `: Type =`, never bare `=`.** `var a = 1` is untyped. `var a := 1` infers `int`.
+  Use `:=` when the right-hand side makes the type obvious; otherwise write the type.
+- **Typed collections:** `Array[Node2D]`, `Dictionary[String, int]`. Both type arguments are
+  required for dictionaries (use `Variant` for a side that can be anything). Nested typed
+  collections are not supported: `Dictionary[String, Array[int]]` is an error, and
+  `Dictionary[String, Array]` is fine.
+- **Typed loop variables** when the iterable is untyped: `for key: StringName in drops:`.
+- **Return `-> void`** explicitly. A typed function must return on every path.
+- **Node references** from `$` are untyped (`Node`). Give them a type:
+  `@onready var _label: Label = $Score`. If the node is the wrong type, assigning to a typed
+  variable fails loudly when the scene loads, while `$Score as Label` silently gives `null`.
+- **Casting:** `x as Type` returns `null` when an object isn't that type, with no error. Check with
+  `is` / `is not` when you need certainty: `if body is not CharacterBody2D: return`.
+  Casting between incompatible built-in types (`"5" as int`) is an error, not `null`.
+- **No nullable types.** GDScript has no `Type?`. Object-typed variables can always hold `null`;
+  value types (`int`, `Vector2`, ...) never can. Return `null` from `-> Node2D`, never from `-> int`.
+
+### Warnings as errors
+
+Godot ships with most typing warnings off. Turning them up to *error* (2) makes the import and test
+steps fail on the mistakes agents make most. They go in `project.godot` under `[debug]`:
+
+```ini
+[debug]
+
+gdscript/warnings/untyped_declaration=2
+gdscript/warnings/unsafe_property_access=2
+gdscript/warnings/unsafe_call_argument=2
+gdscript/warnings/unsafe_cast=2
+gdscript/warnings/missing_await=2
+```
+
+On 2026-11-13 these five were checked against this repo: with all of them on, every script still
+compiles, `bin/test.sh` passes 4/4, and the smoke run is clean. Two related settings are left
+off on purpose:
+
+- **`unsafe_method_access`** would catch hallucinated methods (`get_tree().change_scene()`,
+  `scene.instance()`, which are Godot 3 names). But it also rejects `load(path).instantiate()` in
+  `tests/test_case.gd`, a harness file nobody may edit. Set to 2, it breaks the test runner.
+- **`inferred_declaration`** bans `:=`, which the harness and this guide both use.
+
+Only error level matters headless. Warn level (1) shows in the editor, but not in
+`bin/check.sh` output.
+
+These settings are **not enabled yet**. `project.godot` says to edit it by hand only for
+`[input]` and `[autoload]`, so adding `[debug]` is a decision for the repo owner, not a
+feature agent. See [AGENTIC_GODOT.md](AGENTIC_GODOT.md#make-the-compiler-strict).
+
+To silence one warning on purpose, use `@warning_ignore("unused_parameter")` on the line above, or
+`@warning_ignore_start("name")` / `@warning_ignore_restore("name")` around a region (Godot 4.4+).
+Names are the lowercase setting names.
+
+---
+
+## 5. Newer language features (Godot 4.4 to 4.7)
+
+Models trained mostly on Godot 3 or early Godot 4 code don't know these. All of them compile on
+4.7.2 and pass gdtoolkit 4.5.0.
+
+| Feature | Since | Syntax |
+| --- | --- | --- |
+| Typed dictionaries | 4.4 | `var d: Dictionary[String, int] = {}` |
+| `.uid` sidecar files | 4.4 | `player.gd.uid` next to every script. Commit it; move or rename it with its script |
+| Region warning ignores | 4.4 | `@warning_ignore_start("unused_variable")` / `@warning_ignore_restore(...)` |
+| Inspector button | 4.4 | `@export_tool_button("Bake", "Bake") var bake_action: Callable = bake` (needs `@tool`; the second argument is an editor icon name) |
+| Abstract classes and methods | 4.5 | `@abstract class_name Shape`, `@abstract func area() -> float` (no body, no colon) |
+| Variadic functions | 4.5 | `func sum(first: float, ...rest: Array) -> float:`. One rest parameter, last, untyped `Array`, no default. There is no spread operator; use `callv()` |
+| Raw file paths in exports | 4.5 | `@export_file_path("*.png") var icon_path: String` |
+| `missing_await` warning | 4.6 | Calling a coroutine without `await`. Ignored by default |
+| Overrides inherit return type | 4.7 | An override of a typed-return method must `return` a value on every path |
+
+**gdformat writes `@abstract` on the same line** as what it annotates:
+
 ```gdscript
-# GOOD - via group (one-liner, works across scenes)
-for enemy in get_tree().get_nodes_in_group("enemies"):
-    ...
+@abstract class_name Shape
+extends Node2D
+## Base for shapes. Subclasses must say how big they are.
 
-# GOOD - find children by name only one level deep
-var target := $Player as CharacterBody2D   # direct child access with $name
-
-# BAD - long string paths (breaks if someone renames a node)
-var target := get_node("Root/Entities/Characters/Player")  # fragile
+@abstract func area() -> float
 ```
 
-## 10. Comments and Documentation
+If you write `@abstract` on its own line, `bin/format.sh` moves it. Both forms compile.
 
-Comment style uses `##` (doc comments) for public API, `#` for implementation details:
+**Traits did not land.** The PR was closed unmerged. Use composition (child nodes, groups) or a
+shared base class.
+
+---
+
+## 6. Godot 4 API, not Godot 3
+
+Most broken GDScript an agent writes is Godot 3 code. The 4.7 compiler rejects the syntax with a
+message that names the fix. But **renamed methods on objects compile and only fail at runtime**
+(see `unsafe_method_access` above), so learn this table:
+
+| Godot 3 (wrong) | Godot 4 (right) |
+| --- | --- |
+| `export var x = 1` / `onready var` / `tool` | `@export var x := 1` / `@onready var` / `@tool` |
+| `yield(get_tree(), "idle_frame")` | `await get_tree().process_frame` |
+| `yield(timer, "timeout")` | `await timer.timeout` |
+| `connect("body_entered", self, "_on_hit")` | `body_entered.connect(_on_hit)` |
+| `emit_signal("died", x)` | `died.emit(x)` |
+| `var x setget set_x` | `var x: int:` with `set(value):` / `get:` blocks, or `var x: int: set = set_x` |
+| `KinematicBody2D`, `move_and_slide(vel, Vector2.UP)` | `CharacterBody2D`: set `velocity` (and `up_direction`), then `move_and_slide()` |
+| `Sprite`, `Position2D`, `YSort` | `Sprite2D`, `Marker2D`, `y_sort_enabled` |
+| `TileMap` (deprecated in 4.3) | `TileMapLayer`, one node per layer |
+| `scene.instance()` | `scene.instantiate()` |
+| `get_tree().change_scene(path)` | `get_tree().change_scene_to_file(path)` |
+| `update()` (redraw) | `queue_redraw()` |
+| `filename` | `scene_file_path` |
+| `array.empty()` / `remove(i)` / `invert()` | `is_empty()` / `remove_at(i)` / `reverse()` |
+| `RectangleShape2D.extents` | `size` (now the full size, not half) |
+| `rand_range(a, b)` | `randf_range(a, b)` / `randi_range(a, b)` |
+| An override of `_ready()` runs the parent's `_ready()` automatically | It doesn't: call `super()` |
+| `Tween` node | `create_tween()` |
+
+### Things that look like GDScript but aren't
+
+These come from Python or C# habits. All of them fail to compile on 4.7.2:
+
+| Not GDScript | Use |
+| --- | --- |
+| `func f() -> Node?:` (nullable) | `-> Node`, which may return `null` |
+| `for k, v in dict:` | `for k in dict:` then `dict[k]` |
+| `dict.is_key(k)` | `dict.has(k)` or `k in dict` |
+| `@staticmethod` | `static func` |
+| `Array[int]()` | `var a: Array[int] = []` |
+| `@onready var` inside a function | `@onready` is for member variables only |
+| `var (a, b) = pair` (destructuring) | `var a := pair[0]` |
+| `"""docstring"""` | `##` comments **above** the function. A bare string compiles, but it's a standalone expression, not documentation |
+
+---
+
+## 7. Strings and output
 
 ```gdscript
-func add_item(item: InventoryItem) -> bool:
-    ## Add item to inventory if space available.
-    ## @param item The item instance to add
-    ## @return true if added, false if inventory full
-    if items.size() >= max_inventory:
-        return false  # guard clause
-    items.push_front(item)  # most recent at front of UI
-    item_added.emit(item)              # direct signal call (Godot 4.x preferred over emit_signal())
-    return true
-
-func _calculate_resistance() -> float:       # private helper — no doc comment needed
-    var base := 0.1 * level
-    var armor_bonus := 0.05 * equipment.bonus_armor
-    return clampf(base + armor_bonus, 0.0, 0.8)
+var line := "Score: %d" % score  # one value
+var pos := "(%.1f, %.1f)" % [p.x, p.y]  # several values: an Array
+var named := "{who} took {n}".format({"who": who, "n": n})
+var quick := str("hp=", hp, " max=", max_hp)  # str() concatenates its arguments
 ```
 
-**Never** write `# TODO` without a scope tag:
+- `%` and `format()` are clearer than `+` chains. `+` only joins strings, so `"a" + 1` is an error.
+- `print()` for temporary debugging only; remove it before you finish. The gate fails on errors, not
+  prints, but noisy output hides the real errors from the next agent.
+- `push_error("...")` for "this should never happen". It logs with a stack trace and execution
+  continues. **The gate fails on any `ERROR:` line**, so `push_error` in a path that tests hit
+  fails `bin/check.sh`. That's intended.
+- `push_warning("...")` for recoverable oddities.
+- `assert(cond, "msg")` runs only in debug builds and is stripped from release exports. Never put a
+  side effect in the condition.
+
+---
+
+## 8. Control flow
+
+- **Early returns** over nesting (gdlint also flags `else` after `return`: `no-else-return`,
+  `no-elif-return`).
+- **`match`** for three or more branches on one value. `_:` is the default arm.
+- **No parentheses** around `if` / `while` conditions.
+- At most **6 returns** per function and **10 parameters** (gdlint `max-returns`,
+  `function-arguments-number`). Hitting either means the function should be split.
+
 ```gdscript
-# @todo - design: implement item identification mechanic
-# @fix - performance: cache tilemap neighbor lookups
-# @hack - workaround for Godot node path issue; fix after refactor
+func label_for(state: int) -> String:
+	match state:
+		0:
+			return "idle"
+		1:
+			return "moving"
+		_:
+			return "unknown"
 ```
 
-## 11. Error Handling and Debugging
+---
 
-```gdscript
-# Always use push_error() for game-breaking issues (shouldn't happen)
-if not player_node:
-    push_error("[Player] Missing player reference — game state may be corrupt")
+## 9. Godot-specific habits
 
-# Use conditional print during development but remove before gate check runs
-var debug_label := true  # toggle to disable prints without removing code
+- **Connect signals in code**, in `_ready()`: `body_entered.connect(_on_body_entered)`. Then the
+  connection is visible where the handler is. Don't add `[connection]` entries to `.tscn` files.
+- **Physics in `_physics_process`**, visuals in `_process`. Movement uses `velocity` +
+  `move_and_slide()`.
+- **Input through actions** (AGENTS.md rule 3): `Input.get_vector(...)`,
+  `Input.is_action_just_pressed("dash")`. Never `Input.is_key_pressed(KEY_A)` or raw keycodes.
+- **Find nodes by group or `%UniqueName`** (AGENTS.md rule 2), never by long `get_node()` paths.
+  `$Child` for a node this scene owns directly is fine.
+- **`get_tree().get_nodes_in_group("coins")`** returns `Array[Node]`.
+  `get_first_node_in_group("player")` returns the node or `null`.
+- **State goes through `GameState`** (AGENTS.md rule 1): see [ARCHITECTURE.md](ARCHITECTURE.md).
+- **`preload()` in a `const`** for scenes you instance: `const CoinScene := preload("res://scenes/coin.tscn")`.
+  A preload of a missing path is a compile error, which is what you want.
+- **Defer tree changes made during physics callbacks.** Adding or freeing physics nodes inside
+  `body_entered` can error ("Can't change this state while flushing queries"). Use
+  `queue_free()` (already deferred), `add_child.call_deferred(node)`, or
+  `set_deferred("monitoring", false)`.
 
-# Assertions with @warning_ignore (Godot 4.x warning suppression)
-@warning_ignore("untyped_local_constant")
-const DEBUG_MODE := false
-```
+---
 
-## Summary Checklist Before Committing
+## 10. Comments
 
-- [ ] All parameter types?
-- [ ] All return types declared?
-- [ ] No untyped `Array` / `Dictionary` (use generics)?
-- [ ] No magic numbers (constants for everything)?
-- [ ] 4-space indentation throughout?
-- [ ] Trailing whitespace removed?
-- [ ] Two blank lines between function blocks?
-- [ ] Private methods prefixed with `_`?
-- [ ] Public API has `##` doc comment?
+- One `##` doc comment line under `extends`, saying what the script is *for*.
+- `##` above a public function to document it. Godot's doc syntax supports
+  `@deprecated`, `@experimental` and `@tutorial`. It has no `@param` / `@return`, so describe
+  those in the sentence.
+- `#` comments say **why**, not what. A comment that repeats the code is noise.
+- No commented-out code; git has the history.
+
+---
+
+## Checklist
+
+- [ ] `bin/format.sh` run; `bin/check.sh` passes
+- [ ] Every `var`, parameter and return is typed (`:=` or `: Type`)
+- [ ] Declarations in the order of section 1; functions: virtuals, public, private
+- [ ] Godot 4 names only (section 6); no Python-isms
+- [ ] Signals connected in `_ready()` with `.connect(callable)`
+- [ ] New state is on `GameState`, reset in `reset()`, in `snapshot()`
+- [ ] No `class_name` unless another script uses the type
+- [ ] New `.gd` files committed **with** their `.gd.uid`

@@ -1,494 +1,496 @@
-# Code Patterns — Dragon Crystal Game
+# Patterns
 
-Copy-paste-ready patterns for common operations. Every pattern is tagged with what it solves.
+Working code for the things features here usually need. Together these files make one small
+feature set: coins and score, a HUD, enemies that chase and hurt the player, a spawner, game over
+and restart. They are **copied verbatim** from a build of that feature set, made on 2026-11-13 in a
+copy of this repo. There, every file passed `gdformat --check`, `gdlint`, the Godot 4.7.2 import and
+compile, and the tests in [TESTING_STANDARDS.md](TESTING_STANDARDS.md) (21 passing, including this
+repo's 4). That was with the strict warnings from
+[GDSCRIPT_STYLES.md](GDSCRIPT_STYLES.md#warnings-as-errors) turned on.
+
+Use them as shapes, not as features to add. Build what the feature file asks for (AGENTS.md
+rule 6), and take names, numbers and sizes from the plan.
+
+| Pattern | Files |
+| --- | --- |
+| [GameState](#gamestate) | `scripts/game_state.gd` |
+| [A pickup](#a-pickup) | `scenes/coin.tscn`, `scripts/coin.gd` |
+| [Spawning at clear random spots](#spawning-at-clear-random-spots) | `scripts/main.gd` |
+| [A HUD that follows GameState](#a-hud-that-follows-gamestate) | `scenes/hud.tscn`, `scripts/hud.gd` |
+| [An enemy that chases and hurts](#an-enemy-that-chases-and-hurts) | `scenes/enemy.tscn`, `scripts/enemy.gd` |
+| [Spawning over time](#spawning-over-time) | `scripts/enemy_spawner.gd` |
+| [Game over and restart](#game-over-and-restart) | `scripts/main.gd`, `project.godot` |
+| [Pure rules](#pure-rules) | `scripts/rules.gd` |
+| [Wiring into main.tscn](#wiring-into-maintscn) | `scenes/main.tscn` |
+| [Reading state from the playtester](#reading-state-from-the-playtester) | an MCP `run_script` |
 
 ---
 
-## Pattern: Typed GameState Query
+## GameState
 
-**Problem:** Scripts need to read state without coupling to specific scenes.
+Every checkable value: a variable, a method that changes it and emits `changed`, a line in
+`reset()`, an entry in `snapshot()`. Randomness comes from one seeded `rng`.
 
 ```gdscript
-class_name GameManager extends Node
+extends Node
+## Autoload "GameState": the one place game state lives.
+## Tests and the playtester read the game through snapshot(), so every feature
+## that adds state (score, health, level, timers) adds it here and to snapshot().
 
-func get_player_position() -> Vector2:
-    var player := get_tree().get_first_node_in_group("player") as CharacterBody2D
-    if not player:
-        push_error("[GameManager] Player node not found in 'player' group")
-        return Vector2.ZERO
-    return player.global_position
+signal changed
+signal game_over
 
+const START_HEALTH := 3
 
-func set_health(value: float) -> void:
-    ## Validate before writing — GameState validates its own state
-    GameState.hp = clampf(value, 0.0, float(GameState.max_hp))
-    GameState.changed.emit()
+## Seed for rng. 0 picks a new random seed on every reset(). Tests set it before spawning main.
+## Configuration, not game state: reset() reads it but never clears it.
+var rng_seed := 0
 
-
-func get_equipment_count(item_type: Inventory.ItemType) -> int:
-    var count := 0
-    for item in GameState.inventory:
-        if item.type == item_type:
-            count += 1
-    return count
+var score := 0
+var coins_collected := 0
+var health := START_HEALTH
+var is_game_over := false
+var rng := RandomNumberGenerator.new()
 
 
-## Snapshot helper — useful for tests and debugging
-func debug_print_state() -> void:
-    var snap := GameState.snapshot()
-    print("GameState snapshot: %s" % str(snap))
+func reset() -> void:
+	score = 0
+	coins_collected = 0
+	health = START_HEALTH
+	is_game_over = false
+	if rng_seed != 0:
+		rng.seed = rng_seed
+	else:
+		rng.randomize()
+	changed.emit()
+
+
+func collect_coin(value: int) -> void:
+	score += value
+	coins_collected += 1
+	changed.emit()
+
+
+func damage_player(amount: int) -> void:
+	if is_game_over or amount <= 0:
+		return
+	health = maxi(health - amount, 0)
+	if health == 0:
+		is_game_over = true
+		game_over.emit()
+	changed.emit()
+
+
+func snapshot() -> Dictionary:
+	var state := {
+		"score": score,
+		"coins_collected": coins_collected,
+		"coins_left": get_tree().get_nodes_in_group("coins").size(),
+		"enemies": get_tree().get_nodes_in_group("enemies").size(),
+		"health": health,
+		"is_game_over": is_game_over,
+	}
+	var player := get_tree().get_first_node_in_group("player") as Node2D
+	if player:
+		state["player_position"] = [
+			roundi(player.global_position.x), roundi(player.global_position.y)
+		]
+	var scene := get_tree().current_scene
+	state["scene"] = scene.scene_file_path if scene else ""
+	return state
 ```
 
+Notes:
+
+- `damage_player` ignores bad input and anything after game over. Validation lives in the method,
+  which is why nothing else writes `health` directly.
+- `game_over` is a separate signal because listeners want the *event*. `changed` still fires, so
+  the HUD redraws.
+- `snapshot()` reports counts by group (`coins_left`, `enemies`), so tests and the playtester don't
+  each count differently.
+
 ---
 
-## Pattern: Item Identification Lookup
+## A pickup
 
-**Problem:** Roguelike items are unidentified until first use — colors map to effects.
+An `Area2D` in a group, which notices the player with `body_entered`, tells `GameState`, and
+frees itself.
 
-```gdscript
-class_name ItemDB extends Object
-## Central database mapping item colors + types to effect values.
-## Unidentified items show only color; once identified, replace name with result.
+```ini
+[gd_scene format=3]
 
-enum Color { RED = 0xFF0000, GREEN = 0x00FF00, BLUE = 0x0000FF, BROWN = 0x8B4513 }
-enum EffectType { HEAL_10, HEAL_25, POISON_10, MAP_REVEAL, SPEED_BOOST, CURSE_HUNGER }
+[ext_resource type="Script" path="res://scripts/coin.gd" id="1_coin"]
 
-@staticmethod
-func identify(item: InventoryItem) -> Array[Variant]:
-    ## Returns [effect_type, magnitude] for the item's color/type combination.
-    ## This is the lookup used when player throws or uses unidentified item.
-    
-    match item.item_color:
-        Color.RED:
-            return [_EffectType.HEAL_10 if item.rarity == 1 else _EffectType.HEAL_25, 0]
-        Color.GREEN:
-            return [EffectType.POISON_10 if item.rarity == 1 else EffectType.HEAL_10, 10]
-        Color.BLUE:
-            return [EffectType.MAP_REVEAL, 0]
-        Color.BROWN:
-            return [EffectType.SPEED_BOOST, 5]
-        _:
-            push_error("[ItemDB] Unknown item color: %d" % item.item_color)
-            return [null, 0]
+[sub_resource type="CircleShape2D" id="CircleShape2D_coin"]
+radius = 10.0
 
+[node name="Coin" type="Area2D" groups=["coins"]]
+script = ExtResource("1_coin")
 
-## Once identified — update the InventoryItem in GameState so it gets a known name
-@staticmethod
-func apply_identification(item: InventoryItem, result: Array[Variant]) -> void:
-    var (effect_type: EffectType magnitude: int) = result
-    match effect_type:
-        EffectType.HEAL_10:
-            item.identifier := "Potion of Minor Healing"
-        EffectType.HEAL_25:
-            item.identifier := "Potion of Healing"
-        EffectType.POISON_10:
-            item.identifier := "Poison Vial (Minor)"
-        _:
-            item.identifier = "Unknown Item (%s)" % str(effect_type)
+[node name="Body" type="Polygon2D" parent="."]
+color = Color(1, 0.84, 0.2, 1)
+polygon = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+
+[node name="Collision" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_coin")
 ```
 
----
-
-## Pattern: Spawn Enemy at Random Room Position
-
-**Problem:** Enemies need to appear within bounds of the current room on the floor.
-
 ```gdscript
-class_name RoomSpawner extends Node2D
-## Spawns enemies within a rectangular boundary — the "room" area.
+extends Area2D
+## A coin. Walking the player into it adds VALUE to the score, once, and removes the coin.
 
-@export var min_distance_from_edges: float = 64.0    # keep enemies away from walls
-var _spawn_positions := PackedVector2Array()
+const VALUE := 10
 
-
-func find_spawn_points(room_rect: Rect2, count: int) -> Array[Vector2]:
-    ## Find random spawn points within room_rect, keeping edges clear.
-    var margin := min_distance_from_edges
-    var available_x := rangei(
-        room_rect.position.x + margin,
-        room_rect.end.x - margin,
-        32   # tile size = step
-    )
-    var available_y := rangei(
-        room_rect.position.y + margin,
-        room_rect.end.y - margin,
-        32
-    )
-    var points := Array[Vector2]()
-    for x in available_x:
-        for y in available_y:
-            points.push_back(Vector2(x, y))
-    
-    # Shuffle and take count
-    _shuffle_array(points)
-    return points.slice(0, count)
+var _taken := false
 
 
-func _shuffle_array(arr: Array[Vector2]) -> void:
-    """Fisher-Yates shuffle"""
-    for i in range(arr.size() - 1, 0, -1):
-        var j := randi() % (i + 1)
-        var temp := arr[i]
-        arr[i] = arr[j]
-        arr[j] = temp
+func _ready() -> void:
+	body_entered.connect(_on_body_entered)
+
+
+func _on_body_entered(body: Node2D) -> void:
+	if _taken or not body.is_in_group("player"):
+		return
+	_taken = true  # body_entered can fire again before queue_free() lands
+	GameState.collect_coin(VALUE)
+	queue_free()
 ```
 
----
-
-## Pattern: Turn-Based Move Queue
-
-**Problem:** Players pick up food items — each pickup costs some movement turns to process.
-
-```gdscript
-class_name MoveProcessor extends Object
-## Handles turn processing for player movement. 
-## Each tile moved consumes 1 food point and gives enemies one action tick.
-
-@onready var food_per_tile := 1.0
-
-func move_player(from: Vector2, direction: Vector2) -> Dictionary:
-    """Process one player movement step.
-    
-    Returns dict with: success (bool), new_position (Vector2), 
-                       food_delta (float), enemy_actions_triggered (int)
-    """
-    var steps := maxf(1.0, direction.length())
-    var new_pos := from + direction * steps
-    
-    # Check wall collision against GameState floor boundaries
-    if is_out_of_bounds(new_pos):
-        return {"success": false, "new_position": from, "food_delta": 0.0}
-    
-    # Consume food for movement
-    var cost := food_per_tile * steps
-    if GameState.food_points < cost:
-        push_error("[MoveProcessor] Not enough food to move")
-        return {"success": false, "new_position": from, "food_delta": 0.0}
-    
-    GameState.food_points -= cost
-    
-    # Each movement step = one enemy action tick
-    var triggered := _process_enemy_actions()
-    
-    return {
-        "success": true,
-        "new_position": new_pos,
-        "food_delta": -cost,
-        "enemy_actions_triggered": triggered,
-    }
-
-
-func is_out_of_bounds(pos: Vector2) -> bool:
-    """Check if position is outside floor tilemap bounds."""
-    var bounds := DungeonConfig.floor_dimensions(current_floor())
-    return (pos.x < 0 or pos.y < 0 
-         or pos.x > bounds.width
-         or pos.y > bounds.height)
-
-
-func _process_enemy_actions() -> int:
-    """Trigger one action per living enemy. Returns count of actions taken."""
-    var action_count := 0
-    for enemy in get_tree().get_nodes_in_group("enemies"):
-        if not (enemy is Enemy) or enemy.is_dead():
-            continue
-        var result := EnemyAI.process_action(enemy, GameState.current_floor())
-        if target_valid(result):
-            _apply_damage_to_player(result.damage_amount)
-        action_count += 1
-    return action_count
-
-
-func _apply_damage_to_player(amount: int) -> void:
-    GameState.hp -= amount
-    GameState.changed.emit()
-```
+- **`_taken` guards against double counting.** `queue_free()` only takes effect at the end of the
+  frame, so another `body_entered` can arrive first.
+- `queue_free()` is safe inside a physics callback. `add_child()` isn't: use
+  `add_child.call_deferred(...)` there.
+- The player is found by **group**, not name or type.
 
 ---
 
-## Pattern: Equipment Slot Management
+## Spawning at clear random spots
 
-**Problem:** Items go into slots (head, body, weapon, shield); replacing one auto-equips the new and unequips the old.
-
-```gdscript
-class_name EquipmentManager extends Node
-
-enum Slot { HEAD = 0, BODY = 1, MAIN_HAND = 2, OFF_HAND = 3, CONSUMABLE = 4 }
-
-
-func equip(slot: Slot, item: InventoryItem) -> InventoryItem?:
-    ## Equip item in slot. Returns previously-equipped item (which goes back to inventory).
-    var previous := get_equipment(slot)
-    if previous != null:
-        # Unequip — return to inventory
-        GameState.inventory.push_front(previous)
-    
-    GameState.equipment[slot] = item
-    
-    # Apply stat modifiers from item
-    apply_slot_mods(slot, item.item_value_dict())
-    
-    GameState.changed.emit()
-    return previous
-
-
-func unequip(slot: Slot) -> void:
-    var item := get_equipment(slot)
-    if item == null:
-        return
-    GameState.equipment[slot] = null
-    _remove_slot_mods(slot, item.item_value_dict())
-    GameState.changed.emit()
-
-
-func swap(item_index_a: int, item_index_b: int) -> void:
-    """Swap two inventory items (for when player drops one to pick up another of same slot)."""
-    var temp := GameState.inventory[item_index_a]
-    GameState.inventory[item_index_a] = GameState.inventory[item_index_b]
-    GameState.inventory[item_index_b] = temp
-```
-
----
-
-## Pattern: Floor/Warp Square Detection
-
-**Problem:** Player must clear room AND find colored teleport tile to advance.
+`main.gd` spawns the coins, so their number and placement live in one place. The random spot avoids
+the walls, the player and other coins, and it draws from `GameState.rng`, so a seed reproduces the
+layout.
 
 ```gdscript
-class_name FloorProgression extends Node
+extends Node2D
+## Root of the game scene. Owns the arena and the player, spawns the coins, handles restart.
 
-signal floor_complete(floor_id: int, collected_gold: int)
+const CoinScene := preload("res://scenes/coin.tscn")
+const COIN_COUNT := 5
+## The walkable area inside the 32 px walls.
+const ARENA := Rect2(32, 32, 896, 476)
+const WALL_MARGIN := 24.0
+const MIN_GAP := 64.0
 
-
-func check_floor_progress(pos: Vector2, current_floor: int) -> bool:
-    """Check if player standing on warp square at end of room.
-    
-    Returns true if progress trigger fire.
-    """
-    # Check if position is within the "exit zone" of current room
-    var exit_zone := DungeonConfig.get_exit_zone(current_floor)
-    if not exit_zone.has_point(pos):
-        return false
-    
-    # Check if a warp square (colored tile) exists at this exact position
-    var tile_type := get_tile_at_position(pos, "tiles")
-    if tile_type == "warp_square":
-        GameState.current_floor += 1
-        floor_complete.emit(current_floor, GameState.gold)   # listeners receive both values
-        return true
-    
-    return false
+@onready var _player: Node2D = $Player
 
 
-func get_tile_at_position(pos: Vector2, layer_name: String) -> String:
-    """Lookup tile type at given world position (used for warp square detection)."""
-    var map_layer := $MapLayer  # cached in _ready()
-    if not map_layer:
-        push_error("[FloorProgression] No MapLayer found")
-        return ""
-    
-    var coords := to_local(pos)     # Convert world pos → tilemap coords
-    var data := floor_data[coords.x][coords.y]  # [row][col]
-    return data["type"] if "type" in data else "empty_floor"
-```
-
----
-
-## Pattern: Preload Scene Pool (for frequent creation/destruction)
-
-**ProBLEM:** Creating PackedScene instances every frame = GC pressure. Pool them instead.
-
-```gdscript
-class_name ObjectPool extends Node
-## Reuses instantiated scenes rather than creating new ones each time.
-## Like a connection pool or object pool in backend systems — same concept.
-
-var _scene: PackedScene
-var _available := Array[Node2D]()    # free instances, invisible
-
-
-func init(scene_path: String, initial_size: int = 50) -> void:
-    _scene = preload(scene_path)
-    for i in range(initial_size):
-        var inst := _scene.instantiate() as Node2D
-        add_child(inst)
-        inst.visible = false
-        _available.push_back(inst)
-
-
-func acquire(pos: Vector2 = Vector2.ZERO) -> Node2D:
-    if _available.size() > 0:
-        var item := _available.pop_back() as Node2D
-        item.position = pos
-        item.visible = true
-        return item
-    
-    # Pool exhausted — create new one (rare case, only during boss spawns)
-    var fresh := _scene.instantiate() as Node2D
-    add_child(fresh)
-    fresh.position = pos
-    fresh.visible = true
-    return fresh
-
-
-func release(item: Node2D) -> void:
-    item.visible = false
-    _available.push_back(item)
-```
-
----
-
-## Pattern: Damage Calculation (Pure Function for Service Layer)
-
-**Problem:** Combat logic needs to be pure, testable, and not depend on nodes.
-
-```gdscript
-class_name CombatEngine extends Object
-## Pure calculation layer — takes inputs, returns outputs. No Godot API calls.
-
-
-enum DamageType { PHYSICAL, MAGICAL, MAGIC_RESIST }
-
-
-func calculate_damage(
-    base_attack: float,
-    defense: float,
-    level_bonus: int,
-    resistance: float = 0.0,
-    crit_chance: float = 0.1
-) -> DamageResult:
-    """Calculate final damage from attacker stats vs defender stats.
-    
-    @param base_attack: raw attack stat of attacker
-    @param defense: defense stat of target (mitigates damage)
-    @param level_bonus: +X damage per player level (flat modifier)
-    @param resistance: resist chance that negates the entire hit
-    @param crit_chance: probability roll for double damage
-    """
-    var effective_attack := base_attack + float(level_bonus) * 2.0  # +2 per level
-    var damage_before_defense := maxf(effective_attack, defense)     # guarantee minimum
-    var damage_after_defense := clampf(damage_before_defense - defense, 1.0, 99.0)
-    
-    if randf() < resistance:
-        return _DamageResult.new(base_damage: damage_after_defense, is_crit: false, blocked: true)
-    
-    var is_crit := randf() < crit_chance
-    var final_damage := (damage_after_defense * (2.0 if is_crit else 1.0)) as int
-    
-    return _DamageResult.new(
-        base_damage: damage_after_defense,
-        final_damage: final_damage,
-        is_crit: is_crit,
-        blocked: false,
-    )
-```
-
----
-
-## Pattern: Toggle Debug Print on/off Without Removing Code
-
-**Problem:** Want debug prints during dev but not pollute output for gate.
-
-```gdscript
-class_name PlayerController extends Node2D
-
-var _debug := true     # set to false before committing / before running bin/check.sh
+func _ready() -> void:
+	GameState.reset()
+	for i in COIN_COUNT:
+		var coin := CoinScene.instantiate() as Node2D
+		coin.position = _free_spot()
+		add_child(coin)
 
 
 func _process(_delta: float) -> void:
-    if _debug:
-        print("[Player debug] vel.x=%.1f food=%.2f" % [velocity.x, GameState.food_points])
-    
-    move_toward_target()
+	if GameState.is_game_over and Input.is_action_just_pressed("restart"):
+		get_tree().reload_current_scene()
+
+
+## A random point inside the arena, clear of the walls, the player and other coins.
+func _free_spot() -> Vector2:
+	var area := ARENA.grow(-WALL_MARGIN)
+	var spot := area.get_center()
+	for attempt in 100:
+		spot = Vector2(
+			GameState.rng.randf_range(area.position.x, area.end.x),
+			GameState.rng.randf_range(area.position.y, area.end.y)
+		)
+		if _is_clear(spot):
+			return spot
+	push_warning("no clear spot after 100 tries; placing at %s" % spot)
+	return spot
+
+
+func _is_clear(spot: Vector2) -> bool:
+	if spot.distance_to(_player.position) < MIN_GAP * 1.5:
+		return false
+	for other: Node2D in get_tree().get_nodes_in_group("coins"):
+		if spot.distance_to(other.position) < MIN_GAP:
+			return false
+	return true
 ```
+
+- `ARENA` is the inside of the 32 px walls in `main.tscn`. Coins keep `WALL_MARGIN` away from it.
+- **Bounded retries** (`for attempt in 100`) instead of `while true`: a crowded arena must not hang
+  the game or a test. It warns instead.
+- Coins are added one by one, so each new spot checks against the coins already placed.
 
 ---
 
-## Pattern: Connect HUD to GameState Signals
+## A HUD that follows GameState
 
-**Problem:** UI must update whenever game state changes — but doing it in `_process()` is wasteful.
+A `CanvasLayer` with labels, found by unique name, redrawn on `GameState.changed`. It never polls.
+
+```ini
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/hud.gd" id="1_hud"]
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("1_hud")
+
+[node name="Score" type="Label" parent="."]
+unique_name_in_owner = true
+offset_left = 44.0
+offset_top = 40.0
+offset_right = 244.0
+offset_bottom = 66.0
+mouse_filter = 2
+text = "Score: 0"
+
+[node name="Health" type="Label" parent="."]
+unique_name_in_owner = true
+offset_left = 44.0
+offset_top = 66.0
+offset_right = 244.0
+offset_bottom = 92.0
+mouse_filter = 2
+text = "Health: 3"
+```
 
 ```gdscript
-class_name HUDControl extends Control
+extends CanvasLayer
+## Shows the score and health. Redraws whenever GameState changes; never polls.
+
+@onready var _score: Label = %Score
+@onready var _health: Label = %Health
+
 
 func _ready() -> void:
-    # Hook up all HUD bindings during setup, not every frame
-    GameState.hp_changed.connect(_on_hp_changed)
-    GameState.food_changed.connect(_on_food_changed)
-    GameState.gold_changed.connect(_on_gold_changed)
+	GameState.changed.connect(_refresh)
+	_refresh()
 
 
-func _on_hp_changed(current_hp: int, max_hp: int) -> void:
-    $HealthBar.value = current_hp / max_hp * 100.0
-    $HPLabel.text = "%d/%d" % [current_hp, max_hp]
-
-
-func _on_food_changed(food: float) -> float:
-    $FoodBar.value = food / 99.0 * 100.0
-    if food < 20:
-        $FoodWarning.visible = true   # flash warning when starving
-    else:
-        $FoodWarning.visible = false
-
-
-func set_gold(amount: int) -> void:
-    $GoldLabel.text = "$%d" % amount
+func _refresh() -> void:
+	_score.text = "Score: %d" % GameState.score
+	_health.text = "Health: %d" % GameState.health
 ```
+
+- `%Score` works anywhere inside `hud.tscn`, however the labels are nested later.
+- `_refresh()` runs once in `_ready()` too, so the HUD is right before anything changes.
+- `mouse_filter = 2` (ignore), so labels never swallow clicks meant for the game.
 
 ---
 
-## Pattern: Input Handling via Actions (Not Raw Keys)
+## An enemy that chases and hurts
 
-**Correct way per Godot + this project's conventions:**
+A `CharacterBody2D` that moves toward the player, with a slightly larger `Area2D` hitbox. It
+damages the player at most once per cooldown, counted in physics frames so tests are exact.
+
+```ini
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/enemy.gd" id="1_enemy"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_body"]
+radius = 14.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hitbox"]
+radius = 22.0
+
+[node name="Enemy" type="CharacterBody2D" groups=["enemies"]]
+motion_mode = 1
+script = ExtResource("1_enemy")
+
+[node name="Body" type="Polygon2D" parent="."]
+color = Color(0.9, 0.3, 0.3, 1)
+polygon = PackedVector2Array(0, -14, 14, 12, -14, 12)
+
+[node name="Collision" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_body")
+
+[node name="Hitbox" type="Area2D" parent="."]
+
+[node name="Shape" type="CollisionShape2D" parent="Hitbox"]
+shape = SubResource("CircleShape2D_hitbox")
+```
 
 ```gdscript
-# In game_state.gd or player controller:
-func _unhandled_key_input(event: InputEventKey) -> void:
-    if event.keycode == ord("I"):  # inventory toggle — only for one-shot actions
-        GameState.inventory_open = not GameState.inventory_open
+extends CharacterBody2D
+## An enemy. Walks toward the player and hurts them on contact, at most once per cooldown.
+
+const HIT_COOLDOWN_FRAMES := 60
+
+@export var speed := 90.0
+
+var _cooldown := 0
+
+@onready var _hitbox: Area2D = $Hitbox
 
 
-## For continuous movement — use is_action_pressed NOT raw key codes:
-func _physics_process(delta: float) -> void:
-    var direction := Vector2.ZERO
-    
-    if Input.is_action_pressed("move_left"):
-        direction.x -= 1
-    if Input.is_action_pressed("move_right"):
-        direction.x += 1
-    if Input.is_action_pressed("move_up"):
-        direction.y -= 1
-    if Input.is_action_pressed("move_down"):
-        direction.y += 1
-    
-    if direction != Vector2.ZERO:
-        direction = direction.normalized()
-        velocity = direction * move_speed
+func _physics_process(_delta: float) -> void:
+	var player := get_tree().get_first_node_in_group("player") as Node2D
+	if player == null or GameState.is_game_over:
+		velocity = Vector2.ZERO
+		return
+	velocity = global_position.direction_to(player.global_position) * speed
+	move_and_slide()
+	if _cooldown > 0:
+		_cooldown -= 1
+	elif _touching_player():
+		GameState.damage_player(1)
+		_cooldown = HIT_COOLDOWN_FRAMES
 
+
+func _touching_player() -> bool:
+	for body in _hitbox.get_overlapping_bodies():
+		if body.is_in_group("player"):
+			return true
+	return false
 ```
+
+- The body's collision stops the enemy at the player. The bigger `Hitbox` is what detects
+  "touching".
+- `get_overlapping_bodies()` is polled each physics frame instead of `body_entered`, because
+  damage must repeat while contact lasts.
+- `motion_mode = 1` (floating) is the top-down mode. The default, grounded, assumes gravity and
+  floors.
 
 ---
 
-## Pattern: Error Recovery (When GameState Is Corrupt)
+## Spawning over time
+
+A frame counter in `_physics_process`, with a cap on how many are alive.
 
 ```gdscript
-func validate_game_state() -> Dictionary:
-    """Return a diagnostics report. If invalid, fix what's recoverable."""
-    var issues := Array[String]()
-    
-    if GameState.hp < 0:
-        push_error("[GameState] HP went negative! Reset to 0.")
-        GameState.hp = 0
-        issues.append("hp_underflow")
-        
-    if GameState.food_points > 99:
-        GameState.food_points = 99
-        issues.append("food_overflow")
-    
-    while GameState.inventory.size() > GameState.max_inventory:
-        var removed := GameState.inventory.pop_back()   # drop oldest item
-        push_error("[%s] Inventory over capacity, dropped: %s" % [removed.name])
-        issues.append("inventory_overfull")
-    
-    return {success: issues.size() == 0, issues: issues}
+extends Node2D
+## Spawns an enemy at a random arena corner every SPAWN_EVERY_FRAMES, up to MAX_ALIVE at once.
+
+const EnemyScene := preload("res://scenes/enemy.tscn")
+const SPAWN_EVERY_FRAMES := 180
+const MAX_ALIVE := 3
+const CORNERS: Array[Vector2] = [
+	Vector2(72, 72), Vector2(888, 72), Vector2(72, 468), Vector2(888, 468)
+]
+
+var _frames := 0
+
+
+func _physics_process(_delta: float) -> void:
+	if GameState.is_game_over:
+		return
+	_frames += 1
+	if _frames < SPAWN_EVERY_FRAMES:
+		return
+	_frames = 0
+	if get_tree().get_nodes_in_group("enemies").size() >= MAX_ALIVE:
+		return
+	var enemy := EnemyScene.instantiate() as Node2D
+	enemy.position = CORNERS[GameState.rng.randi_range(0, CORNERS.size() - 1)]
+	add_child.call_deferred(enemy)  # we're inside a physics step
 ```
+
+- **`add_child.call_deferred`**, because adding a physics body during a physics step can error.
+- A `Timer` node works too under `--fixed-fps`, but a counter is easier to test exactly ("none at
+  170 frames, one at 190").
+- `const CORNERS: Array[Vector2] = [...]` is a typed constant array.
+
+---
+
+## Game over and restart
+
+`GameState.is_game_over` is the flag. Things that should stop check it (the spawner, the enemy).
+`main.gd` restarts on the `restart` action with `reload_current_scene()`, and `main._ready()`
+calls `GameState.reset()` on the new scene. The action is added to `project.godot` `[input]`:
+
+```ini
+restart={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"physical_keycode":82)]
+}
+```
+
+The restart logic is in `main.gd` above (`_process`). Testing a reload needs care, because the
+reloaded scene isn't freed by the harness: see
+[TESTING_STANDARDS.md §5](TESTING_STANDARDS.md#5-isolation-what-the-harness-resets-and-what-it-doesnt).
+
+---
+
+## Pure rules
+
+Formulas with no nodes, as `static func`s on a `class_name` script.
+
+```gdscript
+class_name Rules
+extends RefCounted
+## Pure game rules: numbers in, numbers out. No nodes or tree, so tests call them directly.
+
+
+## Damage after armour; a hit always does at least 1.
+static func damage_after_armor(damage: int, armor: int) -> int:
+	return maxi(damage - armor, 1)
+
+
+## Bonus for collecting coins in a streak, capped at 5 coins.
+static func streak_bonus(streak: int) -> int:
+	return clampi(streak, 0, 5) * 2
+```
+
+`extends RefCounted` because it's never instanced, and it needs no scene. Tests call
+`Rules.damage_after_armor(5, 2)` directly.
+
+---
+
+## Wiring into main.tscn
+
+The additions to the existing `main.tscn`: two `ext_resource` lines after the existing ones, and
+two nodes at the end. The coins aren't in the file; `main.gd` spawns them.
+
+```ini
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/hud.tscn" id="3_hud"]
+[ext_resource type="Script" path="res://scripts/enemy_spawner.gd" id="4_spawner"]
+
+...existing sub_resources and nodes, unchanged...
+
+[node name="EnemySpawner" type="Node2D" parent="."]
+script = ExtResource("4_spawner")
+
+[node name="HUD" parent="." instance=ExtResource("3_hud")]
+```
+
+The HUD goes **last**, so it draws over everything (it's a `CanvasLayer`, so it would anyway; keeping
+UI last is still the convention).
+
+---
+
+## Reading state from the playtester
+
+The playtester agent reads the running game with the godot MCP's `godot_run_script`. The script
+must extend `RefCounted` and define `execute(scene_tree)`; whatever it returns comes back as JSON:
+
+```gdscript
+extends RefCounted
+
+
+func execute(scene_tree: SceneTree) -> Variant:
+	return scene_tree.root.get_node("GameState").snapshot()
+```
+
+Everything above shows up there: `{"score": 10, "coins_left": 4, "health": 3, ...}`. If a
+criterion can't be read this way, the state is missing from `snapshot()`. Fix the game, not the
+playtest. During input, `godot_simulate_input` with `"watch": ["/root/GameState:score"]` samples a
+value after every step. See the `godot-playtest` skill.
+
+---
+
+## Not here, on purpose
+
+- **Object pools.** Godot frees and instances small scenes cheaply. Pool only after a profile
+  shows a problem.
+- **Service layers, event buses, manager autoloads.** One `GameState` plus scene scripts is enough
+  at this size ([ARCHITECTURE.md §9](ARCHITECTURE.md#9-anti-patterns)).
+- **TileMapLayer levels.** Tile data is binary in the `.tscn`; generate it from a script or the
+  editor rather than by hand ([SCENES_AND_TSCN.md §4](SCENES_AND_TSCN.md#4-editing-a-scene-by-hand)).
