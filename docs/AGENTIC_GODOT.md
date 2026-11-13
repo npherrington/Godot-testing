@@ -32,14 +32,21 @@ linked. Unmarked statements describe this repo, and can be checked by reading it
   **0**. `--import` with a script that doesn't compile exits 0. A runtime `SCRIPT ERROR` aborts
   only the current function, so in a `-s` script it can skip the `quit()` call and leave the
   process **running forever**. The only reliable signals are the output text and a timeout.
-  `bin/check.sh` and `bin/test.sh` grep for `SCRIPT ERROR`, `Parse Error` and `ERROR:`.
-  **They have no timeout** (as of 2026-11-13). A test that awaits something that never happens,
-  or a runner that can't load a test file, hangs the gate and stalls an unattended run. Wrapping
-  the Godot calls in a timeout is a harness change for the repo owner. Until then, write waits
-  with a frame limit ([TESTING_STANDARDS.md §6](TESTING_STANDARDS.md#6-timing)).
+  So this repo's harness never trusts either one alone:
+  - `bin/check.sh` and `bin/test.sh` grep the output for `SCRIPT ERROR`, `Parse Error`,
+    `ERROR:` and `WARNING: ... has vanished`.
+  - **Every Godot run has a time limit** (`bin/with-timeout.sh`, which stops the whole process
+    tree). The defaults are import 300 s, parse, scenes and smoke 120 s each, and tests 600 s. Each
+    can be overridden with `IMPORT_TIMEOUT` and similar variables.
+  - Inside the test run, `tests/runner.gd` fails a test still running after **3600 physics
+    frames** (60 s of game time), names it, and stops the run.
+  - In `bin/build-feature.sh`, each agent phase is stopped after `--phase-timeout` minutes
+    (default 90).
 - **Some scene mistakes are only warnings.** **Checked:** a `parent=` naming a missing node, or a
-  node missing its `type=`, prints a `WARNING: ... vanished` and drops the node. The gate passes;
-  a test fails later, confusingly ([SCENES_AND_TSCN.md](SCENES_AND_TSCN.md#what-godot-says-when-a-scene-is-wrong)).
+  node missing its `type=`, prints a `WARNING: ... vanished` and drops the node. Godot's exit code
+  doesn't change, so the gate fails on that warning text. The `scenes` step also loads and
+  instances every `.tscn`, including ones nothing uses yet
+  ([SCENES_AND_TSCN.md](SCENES_AND_TSCN.md#what-godot-says-when-a-scene-is-wrong)).
 - **Headless means no pixels.** The dummy renderer gives no screenshots, so anything visual needs
   a real window (§4).
 - **The text format moved.** Godot stopped writing `load_steps` in 4.6 and started writing
@@ -93,14 +100,16 @@ and fix that.
 | --- | --- | --- | --- |
 | Format | `gdformat --check` (`bin/format.sh` fixes) | Spacing, blank lines, wrapping | Everything semantic |
 | Lint | `gdlint` | Naming, declaration order, unused args, long lines and functions | Types, API misuse |
-| Import | `godot --headless --path . --import` | Broken scenes and resources, missing files, scripts that fail to load | Scripts nothing loads yet; scene warnings |
-| Parse | `tests/parse_check.gd` over every `.gd` | Compile errors in *every* script, including unused ones | Runtime behaviour |
+| Import | `godot --headless --path . --import` | Broken resources, missing files, scripts that fail to load | Scripts and scenes nothing loads yet |
+| Parse | `tests/parse_check.gd` over every `.gd` | Compile errors in *every* script, including unused ones, with strict warnings as errors | Runtime behaviour |
+| Scenes | `tests/scene_check.gd` over every `.tscn` | Scenes that don't load or instance, dropped nodes (`has vanished`), duplicate sibling names, including unused scenes | What `_ready()` does |
 | Tests | `bin/test.sh` | Behaviour, counts, timing, regressions | How it looks |
 | Smoke | main scene, 180 frames, headless | Errors on startup and in the first 3 s | Anything later or interactive |
 | Playtest | godot MCP in a real window | Visibility, layout, colour, real input feel | Exact timing; it's slow |
 | Review | a reading agent | Rule breaks, scope, design smells | Anything it doesn't read |
 
-All of the first six are `bin/check.sh`. Feed a failing step's **exact output** back to the agent.
+The first seven are `bin/check.sh`, each Godot step with a time limit. Feed a failing step's
+**exact output** back to the agent.
 Godot 4.7's messages are specific enough to act on directly. **Checked:**
 
 ```
@@ -113,7 +122,7 @@ Function "is_key()" not found in base Dictionary.
 ### Make the compiler strict
 
 Godot ships with most type-safety warnings **off**, and headless runs only fail on warnings set to
-**error**. Adding this to `project.godot` makes the gate catch far more agent mistakes:
+**error**. This repo's `project.godot` turns these up, so the gate catches far more agent mistakes:
 
 ```ini
 [debug]
@@ -125,14 +134,21 @@ gdscript/warnings/unsafe_cast=2
 gdscript/warnings/missing_await=2
 ```
 
-**Checked:** this repo passes all six gate steps with these on. `missing_await=2` turns the most
-common test bug (calling `hold_action` without `await`) into a compile error.
-`unsafe_method_access=2` would also catch hallucinated Godot 3 method names (`change_scene()`,
-`instance()`), but it breaks `tests/test_case.gd`, a harness file. So leave it off unless the harness
-changes.
+**Checked:** the repo, and a coins/HUD/enemies build made from [PATTERNS.md](PATTERNS.md), pass
+the whole gate with these on. `missing_await=2` turns the most common test bug (calling
+`hold_action` without `await`) into a compile error.
 
-**Not enabled yet.** `project.godot` is to be edited by hand only for `[input]` and `[autoload]`,
-so this is the repo owner's call, not a feature agent's.
+They also apply to the playtester's `run_script` code, which the MCP bridge compiles inside the
+game. `return scene_tree.get_first_node_in_group("player").global_position` is rejected, and
+`(... as Node2D).global_position` works. The `godot-playtest` skill says so. The bridge script
+itself suppresses warnings, so it is unaffected.
+
+`unsafe_method_access=2` would also catch hallucinated Godot 3 method names (`change_scene()`,
+`instance()`), but `tests/test_case.gd` calls `load(path).instantiate()` on an untyped
+`Resource`, so it stays off for now.
+
+These levels are part of the gate. AGENTS.md tells agents never to lower them, and the reviewer
+checks diffs against AGENTS.md.
 
 ---
 

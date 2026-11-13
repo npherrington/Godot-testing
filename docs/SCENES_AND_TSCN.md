@@ -184,19 +184,20 @@ engine writes the format.
 
 These are real 4.7.2 messages, produced by breaking `player.tscn` on purpose:
 
-| Mistake | What Godot prints | Does the gate fail? |
+| Mistake | What Godot prints | Caught by |
 | --- | --- | --- |
-| `SubResource("id")` with an id that isn't defined, or a resource placed after the first `[node]` | `Condition "!int_resources.has(id)" is true` then `Parse Error: Invalid parameter. [Resource file res://scenes/player.tscn:17]` | Yes |
-| `path=` points at a missing file | `[ext_resource] referenced non-existent resource at: res://scripts/playr.gd` | Yes |
-| Stray character on a property line (`radius = 16.0)`) | Errors that make no sense (`root node Body cannot specify a parent node`, a script assigned to the wrong object): the parser lost track of where it was | Yes |
-| **`parent=` names a node that doesn't exist** | `WARNING: Parent path './Nope' for node 'Body' has vanished when instantiating` | **No.** The node is silently dropped |
-| **`type=` left off a non-instance node** | `WARNING: Node './Body' was modified from inside an instance, but it has vanished.` | **No.** The node is silently dropped |
-| Two siblings with the same name | Nothing obvious; Godot renames one. The only sign is leak noise at exit | Only by accident |
+| `SubResource("id")` with an id that isn't defined, or a resource placed after the first `[node]` | `Condition "!int_resources.has(id)" is true` then `Parse Error: Invalid parameter. [Resource file res://scenes/player.tscn:17]` | import, scenes |
+| `path=` points at a missing file | `[ext_resource] referenced non-existent resource at: res://scripts/playr.gd` | import, scenes |
+| Stray character on a property line (`radius = 16.0)`) | Errors that make no sense (`root node Body cannot specify a parent node`, a script assigned to the wrong object): the parser lost track of where it was | import, scenes |
+| `parent=` names a node that doesn't exist | `WARNING: Parent path './Nope' for node 'Body' has vanished when instantiating`, and the node is dropped | scenes (on the warning text) |
+| `type=` left off a non-instance node | `WARNING: Node './Body' was modified from inside an instance, but it has vanished.`, and the node is dropped | scenes (on the warning text) |
+| Two siblings with the same name | Nothing clear from Godot, which renames one | scenes: `two nodes with the same name at ./Body` |
 
-Read **warnings** as well as errors after touching a scene: `bin/check.sh` fails only on
-`ERROR`, `SCRIPT ERROR` and `Parse Error` lines. Scene mistakes that silently drop a node show up
-as a `WARNING: ... vanished` line, and later as a test that can't find the node. When the first
-error makes no sense, look at the line it names and the line just above it.
+Godot's exit code is 0 for most of these, and the dropped-node cases are only *warnings*. So the
+gate's `scenes` step (`tests/scene_check.gd`) loads and instances **every** `.tscn`, including
+scenes nothing uses yet. It fails on any `ERROR`, `SCRIPT ERROR`, `Parse Error` or
+`WARNING: ... has vanished` line, and on duplicate sibling names. When the first error makes no
+sense, look at the line it names and the line just above it.
 
 Path case matters: macOS is case-insensitive, Linux CI isn't. `res://Scenes/Coin.tscn` loads on a
 Mac and fails in CI.

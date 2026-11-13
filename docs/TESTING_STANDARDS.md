@@ -31,11 +31,20 @@ FAIL test_coins.gd::test_a_coin_cannot_be_collected_twice: score after walking o
 20 passed, 1 failed
 ```
 
-`bin/test.sh` fails when any test fails, **and** when the engine prints `SCRIPT ERROR`,
-`Parse Error` or a line starting with `ERROR:`, even if every test passed. That matters because
-Godot's own exit code is unreliable headless. A script that fails to load, or a runtime error
-inside a callback, still exits 0. Grepping the output is the only safe check, and the harness
-already does it.
+`bin/test.sh` fails when:
+
+- any test fails;
+- no test ran (a filter that matches nothing, a file with no `test_` methods);
+- the engine prints `SCRIPT ERROR`, `Parse Error`, a line starting with `ERROR:`, or a
+  `WARNING: ... has vanished` (a broken scene), even if every test passed;
+- one test runs longer than **3600 physics frames** (60 s of game time). The runner names it and
+  stops;
+- the whole run takes longer than **`TEST_TIMEOUT`** seconds (default 600). This catches a loop
+  that never awaits, which the frame limit can't see.
+
+That matters because Godot's own exit code is unreliable headless. A script that fails to load,
+or a runtime error inside a callback, still exits 0. A runtime error can also skip `quit()` and
+leave the process running forever. The output text plus time limits are the only safe check.
 
 **`--fixed-fps 60`** makes every frame exactly 1/60 s of game time, however fast the machine runs.
 So frame counts are deterministic: `hold_action("move_right", 60)` is one second of movement on
@@ -49,9 +58,10 @@ every run and every machine.
 
 | File | Role | Edit? |
 | --- | --- | --- |
-| `tests/runner.gd` | Finds `test_*.gd`, runs each `test_*` method on a fresh instance, prints PASS/FAIL, exits 1 on failure | **No** |
+| `tests/runner.gd` | Finds `test_*.gd`, runs each `test_*` method on a fresh instance with a frame limit, prints PASS/FAIL, exits 1 on failure or when nothing ran | **No** |
 | `tests/test_case.gd` | Base class: `spawn`, `physics_frames`, `hold_action`, `tap_action`, `check`, `check_eq` | **No** |
 | `tests/parse_check.gd` | Used by the gate's `parse` step to compile every script | **No** |
+| `tests/scene_check.gd` | Used by the gate's `scenes` step to load and instance every scene | **No** |
 | `tests/test_<thing>.gd` | Your tests, one file per feature or thing | Yes |
 
 ### Helpers: this is the complete list
@@ -441,8 +451,10 @@ Both read `GameState.snapshot()`. Anything a criterion needs is in it (AGENTS.md
 | `FAIL file: does not load (parse error above?)` | The test file doesn't compile | The `SCRIPT ERROR: Parse Error` line above names the file and line |
 | `SCRIPT ERROR: ...` with all tests passing | A runtime error somewhere (often a null access in a callback) | Fix it. The run fails anyway, on purpose |
 | `test.sh: the engine reported errors above` | An `ERROR:` line, e.g. a `push_error`, a missing resource, a bad scene | Read the first `ERROR:` line |
-| `0 passed, 0 failed` | No tests found or matched | Check the filter and the file name (`test_*.gd`) |
-| The run hangs | A test awaits something that never happens (a signal that doesn't fire, an endless `while`) | Await with a frame limit (§6) |
+| `"await" keyword might be desired because the expression is a coroutine` | A helper called without `await` (`missing_await` is an error here) | Add `await` |
+| `FAIL no tests ran` | The filter matches no file or method, or there are no `test_*` methods | Check the filter and the names (`test_*.gd`, `func test_...`) |
+| `FAIL file::method: still running after 3600 physics frames; stopping the run here` | That test awaits something that never happens (a signal that doesn't fire, a node that never appears) | Find out why it didn't happen; wait with a frame limit (§6) |
+| `TIMEOUT: still running after 600s` | The whole run was stopped, usually by a `while` loop that never awaits | The test after the last PASS/FAIL line hung |
 
 ---
 
@@ -458,7 +470,8 @@ output for CI), the maintained frameworks as of November 2026 are:
 | [gdUnit4](https://github.com/godot-gdunit-labs/gdUnit4) | 6.2.x (Godot 4.5 to 4.7.1); 7.0 in development | `addons/gdUnit4/runtest.sh -a res://test` (exit 100 on failure) |
 
 Switching frameworks is a harness change (AGENTS.md: agents don't edit the harness), so it's a
-decision for the repo owner.
+decision for the repo owner. Whatever runs the tests, keep this runner's properties: a per-test
+limit, failing when nothing ran, and failing on engine errors in the output.
 
 ### CI sketch
 

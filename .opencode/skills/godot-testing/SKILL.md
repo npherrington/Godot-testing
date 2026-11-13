@@ -58,3 +58,10 @@ func test_collecting_a_coin_adds_ten_to_the_score() -> void:
 - `FAIL file::method: message`: the assertion that failed and its values.
 - `does not load`: a parse error in that test file; the engine error above it names the line.
 - `SCRIPT ERROR` lines fail the run even when every test passed: fix the runtime error they name.
+- `"await" keyword might be desired`: a helper was called without `await`. Add it.
+- `still running after 3600 physics frames; stopping the run here`: that test awaits something
+  that never happens (a signal that never fires, a node that never appears). Wait with a frame
+  limit instead, and check why the thing didn't happen.
+- `TIMEOUT: still running after ...s`: the whole run was stopped, usually by a loop that never
+  awaits. The test after the last PASS/FAIL line is the one that hung.
+- `FAIL no tests ran`: the filter matches no file or method, or no `test_*` method exists.

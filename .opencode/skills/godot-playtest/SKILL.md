@@ -52,7 +52,10 @@ func execute(scene_tree: SceneTree) -> Variant:
 ```
 
 Count things by group: `return scene_tree.get_nodes_in_group("coins").size()`.
-Read one node: `return scene_tree.get_first_node_in_group("player").global_position`.
+Read one node: `return (scene_tree.get_first_node_in_group("player") as Node2D).global_position`.
+
+These scripts compile under the project's strict warnings. Cast a node with `as` before reading
+its properties, and type every `var`. Otherwise `run_script` returns a parse error naming the line.
 
 ## Steering to a target
 

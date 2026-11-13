@@ -46,6 +46,9 @@ functions, private functions. Two blank lines between functions.
 - **Indent with tabs.** Lines at most 100 characters.
 - **Type everything**: `var count: int = 0` or `var count := 0`, typed parameters and return types
   (`-> void`). Use `as` to cast nodes: `get_first_node_in_group("player") as Node2D`.
+  The gate enforces this: `project.godot` turns untyped declarations, property access on an
+  uncast `Node`, and coroutines called without `await` into compile errors. The error message
+  names the line and the fix.
 - **Names**: files and functions `snake_case`, classes and nodes `PascalCase`, constants
   `UPPER_CASE`, private members start with `_`, signal handlers `_on_<node>_<signal>`.
 - **Connect signals in code** in `_ready()` (`body_entered.connect(_on_body_entered)`), not in the

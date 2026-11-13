@@ -158,8 +158,9 @@ func damage_for(level: int, bonus := 0) -> int:  # every parameter and return ty
 
 ### Warnings as errors
 
-Godot ships with most typing warnings off. Turning them up to *error* (2) makes the import and test
-steps fail on the mistakes agents make most. They go in `project.godot` under `[debug]`:
+Godot ships with most typing warnings off. This project turns five of them up to *error* (2) in
+`project.godot` under `[debug]`. Code that triggers one fails the gate's import, parse and test
+steps, with a message that names the line:
 
 ```ini
 [debug]
@@ -171,21 +172,26 @@ gdscript/warnings/unsafe_cast=2
 gdscript/warnings/missing_await=2
 ```
 
-On 2026-11-13 these five were checked against this repo: with all of them on, every script still
-compiles, `bin/test.sh` passes 4/4, and the smoke run is clean. Two related settings are left
+What each one rejects:
+
+| Setting | Rejects | Write instead |
+| --- | --- | --- |
+| `untyped_declaration` | `var hits = 0`, `func f(x):`, `for k in d:` over an untyped dictionary | `var hits := 0`, `func f(x: int) -> void:` |
+| `unsafe_property_access` | `get_first_node_in_group("player").global_position` (the result is a plain `Node`) | `(get_first_node_in_group("player") as Node2D).global_position` |
+| `unsafe_call_argument` | Passing a `Variant` or a too-general type to a typed parameter | Cast or type the value first |
+| `unsafe_cast` | `as` on a value whose type the compiler can't see | Give the value a type first |
+| `missing_await` | `hold_action("move_right", 20)` without `await` | `await hold_action("move_right", 20)` |
+
+These are part of the gate: never lower or remove them (AGENTS.md). Two related settings are left
 off on purpose:
 
 - **`unsafe_method_access`** would catch hallucinated methods (`get_tree().change_scene()`,
   `scene.instance()`, which are Godot 3 names). But it also rejects `load(path).instantiate()` in
-  `tests/test_case.gd`, a harness file nobody may edit. Set to 2, it breaks the test runner.
+  `tests/test_case.gd`, and calls like `get_node("GameState").snapshot()` that playtests rely on.
 - **`inferred_declaration`** bans `:=`, which the harness and this guide both use.
 
 Only error level matters headless. Warn level (1) shows in the editor, but not in
-`bin/check.sh` output.
-
-These settings are **not enabled yet**. `project.godot` says to edit it by hand only for
-`[input]` and `[autoload]`, so adding `[debug]` is a decision for the repo owner, not a
-feature agent. See [AGENTIC_GODOT.md](AGENTIC_GODOT.md#make-the-compiler-strict).
+`bin/check.sh` output. See also [AGENTIC_GODOT.md](AGENTIC_GODOT.md#make-the-compiler-strict).
 
 To silence one warning on purpose, use `@warning_ignore("unused_parameter")` on the line above, or
 `@warning_ignore_start("name")` / `@warning_ignore_restore("name")` around a region (Godot 4.4+).
