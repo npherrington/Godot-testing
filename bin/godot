@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# bin/godot [args...]: runs Godot. $GODOT if set, else the macOS app, else `godot` on PATH.
+set -euo pipefail
+if [[ -n "${GODOT:-}" ]]; then exec "$GODOT" "$@"; fi
+app="/Applications/Godot.app/Contents/MacOS/Godot"
+if [[ -x "$app" ]]; then exec "$app" "$@"; fi
+exec godot "$@"

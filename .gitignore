@@ -1,0 +1,12 @@
+# Godot
+.godot/
+*.import
+# godot-mcp-runtime's bridge and screenshots
+.mcp/
+# tools installed by bin/setup.sh
+tools/node_modules/
+tools/.venv/
+# per-run logs, plans, evidence (keep the .gdignore so Godot skips the folder)
+runs/*
+!runs/.gdignore
+.DS_Store

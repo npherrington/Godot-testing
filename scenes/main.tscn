@@ -1,0 +1,66 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2_player"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_horizontal"]
+size = Vector2(960, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_vertical"]
+size = Vector2(32, 540)
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main")
+
+[node name="Background" type="ColorRect" parent="."]
+offset_right = 960.0
+offset_bottom = 540.0
+mouse_filter = 2
+color = Color(0.1, 0.11, 0.15, 1)
+
+[node name="Walls" type="StaticBody2D" parent="."]
+
+[node name="Top" type="CollisionShape2D" parent="Walls"]
+position = Vector2(480, 16)
+shape = SubResource("RectangleShape2D_horizontal")
+
+[node name="Bottom" type="CollisionShape2D" parent="Walls"]
+position = Vector2(480, 524)
+shape = SubResource("RectangleShape2D_horizontal")
+
+[node name="Left" type="CollisionShape2D" parent="Walls"]
+position = Vector2(16, 270)
+shape = SubResource("RectangleShape2D_vertical")
+
+[node name="Right" type="CollisionShape2D" parent="Walls"]
+position = Vector2(944, 270)
+shape = SubResource("RectangleShape2D_vertical")
+
+[node name="WallTop" type="ColorRect" parent="Walls"]
+offset_right = 960.0
+offset_bottom = 32.0
+mouse_filter = 2
+color = Color(0.25, 0.27, 0.35, 1)
+
+[node name="WallBottom" type="ColorRect" parent="Walls"]
+offset_top = 508.0
+offset_right = 960.0
+offset_bottom = 540.0
+mouse_filter = 2
+color = Color(0.25, 0.27, 0.35, 1)
+
+[node name="WallLeft" type="ColorRect" parent="Walls"]
+offset_right = 32.0
+offset_bottom = 540.0
+mouse_filter = 2
+color = Color(0.25, 0.27, 0.35, 1)
+
+[node name="WallRight" type="ColorRect" parent="Walls"]
+offset_left = 928.0
+offset_right = 960.0
+offset_bottom = 540.0
+mouse_filter = 2
+color = Color(0.25, 0.27, 0.35, 1)
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+position = Vector2(480, 270)

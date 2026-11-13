@@ -1,0 +1,8 @@
+{
+  "name": "godot-lab-tools",
+  "private": true,
+  "description": "Pinned tool versions for the agents. Install with bin/setup.sh.",
+  "dependencies": {
+    "godot-mcp-runtime": "4.0.1"
+  }
+}

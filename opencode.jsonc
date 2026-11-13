@@ -1,0 +1,35 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "ollama/qwen3.6:35b-a3b-q4_K_M",
+  "mcp": {
+    "servers": {
+      // Drives the running game: screenshots, input, live scene tree. Pinned in tools/package.json.
+      "godot": {
+        "type": "local",
+        "command": ["node", "tools/node_modules/godot-mcp-runtime/dist/index.js"],
+        "environment": {
+          "GODOT_PATH": "/Applications/Godot.app/Contents/MacOS/Godot",
+          // Unattended runs have nobody to click "allow" on the first launch.
+          "GODOT_MCP_DISABLE_ELICITATION": "true"
+        },
+        // Plain tool calls; local models handle these better than Code Mode.
+        "codemode": false
+      }
+    }
+  },
+  "permissions": [
+    // Only this project's skills. Hides anything found in ~/.claude/skills or ~/.agents/skills.
+    { "action": "skill", "resource": "*", "effect": "deny" },
+    { "action": "skill", "resource": "gdscript-style", "effect": "allow" },
+    { "action": "skill", "resource": "godot-scenes", "effect": "allow" },
+    { "action": "skill", "resource": "godot-testing", "effect": "allow" },
+    { "action": "skill", "resource": "godot-playtest", "effect": "allow" },
+    { "action": "skill", "resource": "feature-plan", "effect": "allow" },
+    { "action": "skill", "resource": "feature-spec", "effect": "allow" },
+    // The Godot MCP has 43 tools; each costs context. Off here, on for the playtester only.
+    { "action": "godot_*", "resource": "*", "effect": "deny" },
+    { "action": "shell", "resource": "git push*", "effect": "deny" },
+    { "action": "shell", "resource": "git reset --hard*", "effect": "deny" },
+    { "action": "shell", "resource": "git clean*", "effect": "deny" }
+  ]
+}
