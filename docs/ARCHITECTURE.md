@@ -1,221 +1,218 @@
-# Architecture Guide — Dragon Crystal Game
+# Architecture
 
-## 1. Core Principle: One Source of Truth
+How the game is put together, and why it's shaped for agents. Agents build it unattended. Tests
+check it headless. A playtester agent checks it in a running window, reading state through the
+godot MCP. All three need the game to be **inspectable**: state in one known place, things
+findable by group, input through named actions. AGENTS.md rules 1 to 3 say this in short; this page
+explains it.
 
-All mutable game data lives on the `GameState` autoload singleton. This is your global store, like a Redux store or a MongoDB document for user state. Nothing else should hold authoritative game data.
+Last checked: 2026-11-13, against Godot 4.7.2 and the code in this repo. The examples are from
+the reference feature in [PATTERNS.md](PATTERNS.md), which compiles and passes its tests.
+
+---
+
+## 1. The pieces
+
+```
+project.godot      [autoload] GameState  ->  scripts/game_state.gd   (lives for the whole run)
+                   [input]    move_*, ... (named actions)
+
+scenes/main.tscn   Main (Node2D, scripts/main.gd)          the game scene; reset on load
+  ├─ Background, Walls                                     static arena
+  ├─ Player        (instance of player.tscn, group "player")
+  ├─ ...           (coins, enemies: instanced or spawned; each kind in its own group)
+  └─ HUD           (CanvasLayer, reads GameState)
+```
+
+| Piece | Owns | Doesn't |
+| --- | --- | --- |
+| **`GameState`** (autoload) | All state a test or player would check: score, health, counts, flags. The methods that change it. `reset()`, `snapshot()`, signals | Nodes, visuals, input |
+| **`main.gd`** | Starting a game (`GameState.reset()`), spawning, restart, wiring scenes together | Rules of any one kind of thing |
+| **One scene + script per kind of thing** (`player`, `coin`, `enemy`, `hud`) | Its own movement, visuals and collisions. It calls `GameState` methods when something counts | Other scenes' children; state that matters beyond itself |
+| **Pure rules** (`static func`s) | Formulas: damage, scoring, thresholds | Anything with a node |
+
+---
+
+## 2. `GameState`: one source of truth
+
+`GameState` is an autoload. Godot creates it at startup, as `/root/GameState`, before any scene,
+and keeps it across scene changes and restarts. Every script can use it by name.
+
+**Everything checkable lives on it** (AGENTS.md rule 1): a variable, reset in `reset()`, included
+in `snapshot()`. The full current pattern is in [PATTERNS.md](PATTERNS.md#gamestate). Its core:
 
 ```gdscript
-# GOOD - only GameState knows if player is dead
-func is_player_alive() -> bool:
-    return GameState.hp > 0
+signal changed
 
-# BAD - scattered state across multiple objects
-if enemy.has_died and _player_health <= 0:   # where does health come from?
-    ...
+var score := 0
+
+
+func reset() -> void:
+	score = 0
+	changed.emit()
+
+
+func collect_coin(value: int) -> void:
+	score += value
+	changed.emit()
+
+
+func snapshot() -> Dictionary:
+	return {"score": score}
 ```
 
-## 2. Service vs Entity Separation
+### Why one place
 
-Godot's node system blurs these but your code should not. Split logic into two categories:
+- **Tests** read `GameState.score`, and nothing else has to be found.
+- **The playtester** reads it live: `godot_run_script` returns `GameState.snapshot()` as JSON, and
+  `godot_simulate_input` can watch `/root/GameState:score` after every simulated input.
+- **Restarts are trivial:** `reset()` puts everything back. Node state is rebuilt anyway when
+  the scene reloads.
+- **Reviewers** see every piece of game state in one file.
 
-### Services (pure systems, no visual representation)
+### Rules for state
 
-These manage game-wide mechanics and have no visual component:
+1. **Change it through methods.** Write `GameState.collect_coin(10)`, not `GameState.score += 10`.
+   The method is where validation lives (no negative damage, nothing after game over) and where
+   `changed` is emitted. A direct write skips both, and the HUD goes stale.
+2. **`reset()` resets everything** to its starting value and emits `changed`. `main.gd` calls it in
+   `_ready()`, so each new game (and each test that spawns main) starts clean.
+   Configuration such as `rng_seed` is the one exception: `reset()` reads it but doesn't clear it.
+3. **`snapshot()` returns plain values**: ints, floats, bools, strings, Arrays of those. The MCP
+   bridge serialises the result to JSON. Round floats you'll compare
+   (`roundi(position.x)`), and put vectors in as `[x, y]`. Include **counts** a criterion talks about
+   (`"coins_left": get_tree().get_nodes_in_group("coins").size()`).
+4. **Transient things stay on their node:** velocity, animation frame, a cooldown counter, whether
+   *this* coin was already taken. If no criterion, test or other script needs it, it isn't
+   game state.
+5. **No `class_name` on autoloads.** The autoload name is already global, and a matching
+   `class_name` is an error.
 
-| Service | Files that implement it |
-|---|---|
-| Damage calculations | `combat_engine.gd` |
-| Floor generation | `dungeon_gen.gd` |
-| Item identification logic | `item_db.gd` (table lookup, not UI) |
-| Turn processing queue | `turn_manager.gd` |
+---
 
-**Properties of services:**
-- They may or may not be nodes (often they are plain classes with no scene)
-- They don't contain rendering code
-- They take data in, compute result, return data out
-- They call methods on GameState when state needs to change
+## 3. Signals: who tells whom
 
-### Entities (objects that exist on screen)
+```
+Player walks into Coin
+  -> Coin._on_body_entered(body)           the coin notices (physics callback)
+  -> GameState.collect_coin(10)            state changes in one place
+  -> GameState.changed.emit()              ...and says so
+  -> HUD._refresh()                        listeners redraw
+```
 
-These represent visual things that appear in the game world:
+- **Things call `GameState` methods; `GameState` emits; listeners react.** The emitter doesn't know
+  who listens, so a new HUD element never needs `GameState` changes.
+- **`changed`** (no arguments) is enough for most listeners: they just re-read what they show.
+  Add a specific signal when listeners need *the event*, not the new state: `game_over`,
+  `collected(value: int)`. Type the parameters.
+- **Connect in code**, in `_ready()`: `GameState.changed.connect(_refresh)`. When the listening
+  node is freed, Godot removes its connections, so scene reloads don't leave dangling ones.
+- **Names are past tense, snake_case:** `changed`, `died`, `coin_collected`.
+- **Emit with `signal_name.emit(args)`**, not `emit_signal("signal_name")`.
+- Don't use signals to ask questions or get return values. Call a method.
+
+---
+
+## 4. Pure rules: static functions
+
+A formula that doesn't need a node (damage after armour, a score bonus, a level threshold) goes in
+a `static func`, in a script with a `class_name` so others can call it:
 
 ```gdscript
-## Entity — has a presence on-screen and responds to input/environment
-func _physics_process(delta: float) -> void:
-    move_toward_target()
-    handle_collision()
+class_name Rules
+extends RefCounted
+## Pure game rules: numbers in, numbers out. No nodes or tree, so tests call them directly.
 
-## NEVER put pure calculation here. Delegate to service instead.
-func attack(entity: Enemy) -> void:
-    var result := CombatEngine.calculate_damage(   # call to service
-        self.attack_power,
-        entity.resistance,
-    )
-    GameState.apply_damage(target, result.final_damage)
+
+## Damage after armour; a hit always does at least 1.
+static func damage_after_armor(damage: int, armor: int) -> int:
+	return maxi(damage - armor, 1)
 ```
 
-**Rule:** If code calculates damage, generates tiles, or looks up drop tables, it goes in a **service**. If code renders an explosion, plays a sound, moves a sprite — it belongs to the **entity**.
+Callers use `Rules.damage_after_armor(5, 2)`. Tests check every edge case without a scene
+([TESTING_STANDARDS.md §10](TESTING_STANDARDS.md#10-pure-logic-test-without-a-scene)). Don't make
+these autoloads or nodes. Only add this layer when there's a real formula; a one-line `score += 10`
+doesn't need one.
 
-## 3. State Mutation Flow
+---
 
-### Pattern: Event → Service (Pure) → GameState (Mutation) → Signal (React)
+## 5. Finding nodes
 
-```
-Player pushes W key
-    → Input event fires
-    → PlayerController._physics_process reads input
-    → Calls CombatEngine.move_player(direction, floor)
-    → CombatEngine calculates movement & returns new position
-    → GameState.update_player_position(new_pos)
-    → GameState emits player_moved(new_pos)
-    → HUD listens and updates
-```
+In order of preference (AGENTS.md rule 2):
 
-### State mutations must go through methods, not direct property writes
+| Need | Use | Example |
+| --- | --- | --- |
+| Data | `GameState` | `GameState.health` |
+| All things of a kind, anywhere | Group | `get_tree().get_nodes_in_group("coins")` |
+| The one thing of a kind | Group | `get_tree().get_first_node_in_group("player") as Node2D` |
+| A child this scene owns | `$Name` or `%UniqueName`, cached in `@onready` | `@onready var _score: Label = %Score` |
+| Another scene's internals | **Don't.** Signal, group or `GameState` | |
 
-**Never** do this anywhere except inside GameState:
-```gdscript
-GameState.hp -= 10  # ❌ bypasses validation
-```
+- Every kind of thing gets a group named after it, set on the scene root in its `.tscn`
+  (`groups=["coins"]`). Spawned instances inherit it. Tests and the playtester count by group.
+- `get_node("/root/Main/World/Coins/Coin3")` and other long paths break the moment a node moves or
+  is renamed. The pipeline's reviewer rejects them.
+- The test harness uses `main.get_node("Player")`. That's a direct child of the scene the test
+  spawned, which is fine.
 
-Always route through a method with a guard:
-```gdscript
-func take_damage(amount: int) -> bool:
-    if amount <= 0:
-        push_error("Invalid damage amount: %d" % amount)
-        return false
-    hp = clampi(hp - amount, 0, max_hp)
-    if hp_changed.is_connected(_on_hp_changed):
-        # guard against re-entrancy on death
-        hp_changed.emit()     # direct signal method, not emit_signal("name") in Godot 4.x
-    if hp <= 0:
-        _on_player_died()
-    return hp == 0
-```
+---
 
-## 4. Signal Design Patterns
+## 6. Scene lifecycle
 
-### Signals are method signatures, not events with payloads you interpret later
+| Moment | What happens |
+| --- | --- |
+| Game launch | Autoloads are created (`GameState`). Then `run/main_scene` (`main.tscn`) loads and becomes `current_scene` |
+| `_ready()` order | **Children before parents.** `HUD._ready()` (connects to `changed`) runs before `Main._ready()` (calls `reset()`), so the HUD sees the reset |
+| Restart | `get_tree().reload_current_scene()`. The old scene is freed and a new `main` is built; `GameState` survives, and `main._ready()` resets it |
+| Changing level | `get_tree().change_scene_to_file("res://scenes/level_2.tscn")`. Again, state that must survive belongs on `GameState` |
+| Test | The harness instances main under the root and makes it `current_scene`, the same as a launch |
 
-Be explicit about every signal's data contract:
-```gdscript
-# GOOD - typed signals (Godot 4.x, per official naming guide: snake_case)
-signal score_changed(value: int)
-signal enemy_spawned(enemy_id: Enemy.EnemyType, at_pos: Vector2)
+Both scene-change calls are deferred: the swap happens at the end of the frame.
 
-# BAD - PascalCase signal names (against Godot convention)
-signal ScoreChanged(value: int)   # doesn't match Godot's snake_case recommendation  
-signal EnemySpawned(...)          # same issue
-```
+---
 
-### GameState emits; everyone else listens
+## 7. Input
 
-Signals create a one-way dependency chain. The emitter doesn't know who is listening — that decoupling lets you swap UI or add new listeners without changing the emitter:
-```gdscript
-func on_pickup(item: InventoryItem) -> void:
-    gold += item.gold_value
-    inventory.push_front(item)
-    # no one needs to know about these consequences
-    gold_changed.emit(gold)        # HUD listens via signal connection
-    inventory_updated.emit(item)   # inventory UI panel listens via signal connection
-```
-
-## 5. Scene Management
-
-### Loading and instantiation flow
-
-All scenes are preloaded at the class-level:
-```gdscript
-class_name EnemySpawner extends Node2D   # one name per file
-
-var _enemy_scenes: Dictionary[StringName, PackedScene] = {
-    "toad": preload("res://scenes/enemies/toad.tscn"),
-    "fire_diamond": preload("res://scenes/enemies/fire_diamond.tscn"),
-    "ninja": preload("res://scenes/enemies/ninja.tscn"),
-}
-```
-
-Always use `preloading` in the class body, never `load()` inside functions except during `_ready()`:
-```gdscript
-func _ready() -> void:
-    # load at startup time only (one-time cost)
-    var floor1 := preload("res://scenes/floor_01.tscn").instantiate() as Node2D
-    get_parent().add_child(floor1)
-```
-
-### Scene hierarchy depth rule
-
-Maximum **4 levels** of nesting from root scene down to visual element:
-```
-main.tscn (root — Node2D)                     ← 1
-├── floor_tilemap.tscn (TileMapLayer)          ← 2
-├── player.tscn (CharacterBody2D)              ← 2
-├─→ $Sprite2D                                 ← 3 (deep within instantiated scene)
-├── hud_ui.tscn (Control)                      ← 2
-├─→ $VBoxContainer/HBar [health bar]           ← 3
-└── enemies_parent [Node2D, group "enemies"]   ← 2
-```
-
-If you find yourself at level 5+, break the scene into an intermediate container.
-
-### Node discovery rules
-
-In order of preference:
-
-1. **$direct-child path** — for a specific node that this script owns
-2. **Groups** — `get_tree().get_nodes_in_group("enemies")` for collections across scenes
-3. **@onready var with $path** — for nodes needed once at _ready() and cached
+Actions are defined in `project.godot` `[input]` and read with `Input` (AGENTS.md rule 3):
 
 ```gdscript
-var enemy_spawn_area: Area2D      # discovered by group, not name-matching
-  
-func _ready() -> void:
-    # 1) Direct child access (this script owns it)
-    player := $Player as CharacterBody2D         
-    
-    # 2) Onready cache for nodes that need the tree to exist first
-    @onready var background: TextureRect = $Background   # one lookup at _ready
-    
-    # 3) Groups for dynamic collections
-    for enemy in get_tree().get_nodes_in_group("enemies"):
-        pass   # operate on all enemies regardless of parent node hierarchy
+	var direction := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	if Input.is_action_just_pressed("restart"):
+		get_tree().reload_current_scene()
 ```
 
-## 6. The Main Scene — Bootstrap Pattern
+- A new control means a new action in `[input]` with a keyboard event, using a
+  `physical_keycode`: `R` is 82, `Space` is 32, and Godot's own key constants cover the rest.
+- **Poll in `_process` / `_physics_process`.** Both the test harness (`Input.action_press`) and the
+  MCP playtester drive polled input. The harness doesn't trigger `_input()` callbacks
+  ([TESTING_STANDARDS.md §7](TESTING_STANDARDS.md#7-input)).
+- Never `Input.is_key_pressed(KEY_R)` or keycodes in scripts.
 
-The root scene (`main.tscn`) is your bootstrap: it connects GameState to scenes but doesn't hold game state itself:
+---
 
-```gdscript
-class_name Main extends Node2D
+## 8. Determinism
 
-var _current_floor := 1
+Agents debug by re-running, so runs should repeat:
 
-func start_game() -> void:
-    load_floor(_current_floor)
-    
-    # Connect GameState signals to UI updates (one-time setup per scene instance)
-    GameState.hp_changed.connect(_on_hp_changed)
-    
-func _on_hp_changed(current_hp: float, max_hp: float) -> void:
-    $HUD/HHealthBar.value = current_hp / max_hp * 100.0
-    
-func load_floor(floor_id: int) -> void:
-    # Clear previous floor nodes
-    for child in get_children():
-        if child is TileMapLayer or child.name == "Enemies" or child.name.begins_with("player"):
-            child.queue_free()
-    
-    # Load new floor data from GameState service
-    var floor_data := DungeonGen.generate_floor(floor_id)
-    GameState.set_current_floor(1, floor_data)
-```
+- **Fixed timestep in tests and smoke runs** (`--fixed-fps 60`). Count cooldowns and intervals in
+  physics frames, or derive them from `delta` in `_physics_process`.
+- **One random source:** `GameState.rng` (a `RandomNumberGenerator`), seeded in `reset()` from
+  `GameState.rng_seed` (0 means random). Never global `randf()` in game code; tests can't control it.
+- **No wall-clock time** (`Time.get_ticks_msec()`) in game rules.
 
-## 7. Anti-Patterns
+---
 
-| ❌ Don't | ✅ Do Instead |
-|---|---|
-| Multiple scripts reading/writing `hp` directly on different objects | All HP mutation goes through `GameState.apply_damage()` |
-| Scene A finds Scene B's node by hard-coded path | Use groups or signals |
-| Services calling GameState methods for state that doesn't actually change | Validate before emitting — no-op changes waste signal listeners |
-| Godot lifecycle functions (`_process`, `_physics_process`) doing calculations — they only read state and trigger actions | Move calculation to plain methods, call from process hooks |
-| Passing GameState around as a constructor argument everywhere | It's an autoload (singleton) on every frame, accessible by name without reference |
+## 9. Anti-patterns
+
+| Don't | Do |
+| --- | --- |
+| Keep score or health on the player node | A variable on `GameState`, with a method to change it |
+| `GameState.health -= 1` from another script | `GameState.damage_player(1)` |
+| Forget `reset()` or `snapshot()` for a new variable | Add all three: the variable, its reset, its snapshot entry |
+| Poll `GameState` every frame in the HUD | Connect to `GameState.changed` |
+| `get_node("../../World/Player")` | `get_tree().get_first_node_in_group("player")` |
+| `emit_signal("changed")`, `connect("changed", self, "_on_changed")` | `changed.emit()`, `changed.connect(_on_changed)` |
+| Spawn or free physics nodes directly inside `body_entered` | `queue_free()`, `add_child.call_deferred(node)` |
+| `randi()` for game randomness | `GameState.rng.randi_range(a, b)` |
+| A manager autoload per system (`ScoreManager`, `EnemyManager`) | One `GameState`; the spawning logic lives in `main.gd` or a spawner node |
+| Object pools, service layers, event buses "for later" | The simplest thing that meets the criteria (AGENTS.md rule 6). Add structure when a feature needs it |

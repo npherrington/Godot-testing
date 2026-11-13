@@ -6,7 +6,11 @@ description: How to write and edit Godot 4 .tscn scene files by hand safely, and
 # Scenes (.tscn)
 
 Scenes here are written as text. Godot is strict about the format; a bad scene fails the gate's
-`import` step. Read the whole scene file before editing it.
+`import` or `scenes` step. Read the whole scene file before editing it.
+
+A `parent=` that names a missing node, or a node without `type=` (and not an `instance=`), makes
+Godot drop the node with a `WARNING: ... has vanished`. The gate fails on that line; fix the
+`parent`/`type` it names.
 
 ## Format
 

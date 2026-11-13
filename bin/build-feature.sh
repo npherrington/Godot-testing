@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #
-# bin/build-feature.sh [--model=<provider/model>] [--no-commit] [--max-fixes=<n>] features/<name>.md
+# bin/build-feature.sh [--model=<provider/model>] [--no-commit] [--max-fixes=<n>]
+#                      [--phase-timeout=<minutes>] features/<name>.md
 #
 # Takes one feature file from spec to a commit on its own branch, unattended:
 #
@@ -14,6 +15,9 @@
 #   --model      use this model for every agent, e.g. ollama/qwen3.6:35b-a3b-q4_K_M
 #   --no-commit  leave the finished changes uncommitted on the branch
 #   --max-fixes  fix rounds across all phases (default 4)
+#   --phase-timeout  minutes one agent phase may run before it is stopped, with everything it
+#                started (default 90). A stopped phase counts like a failed one: the gate or the
+#                missing result file sends the run to a fix round, or stops it.
 #
 # The feature file may be uncommitted; it rides along and is committed with the feature.
 # Everything a run writes (plan, logs, check output, playtest evidence, review): runs/<name>/.
@@ -25,19 +29,24 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
 
 usage() {
-  echo "usage: bin/build-feature.sh [--model=<provider/model>] [--no-commit] [--max-fixes=<n>] features/<name>.md" >&2
+  echo "usage: bin/build-feature.sh [--model=<provider/model>] [--no-commit] [--max-fixes=<n>] [--phase-timeout=<minutes>] features/<name>.md" >&2
   exit 2
 }
 
 model=""
 commit=1
 max_fixes=4
+phase_timeout=90
 feature=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --model=*) model="${1#*=}" ;;
     --no-commit) commit=0 ;;
     --max-fixes=*) max_fixes="${1#*=}" ;;
+    --phase-timeout=*)
+      phase_timeout="${1#*=}"
+      [[ "$phase_timeout" =~ ^[1-9][0-9]*$ ]] || usage
+      ;;
     -h | --help) usage ;;
     -*) usage ;;
     *)
@@ -118,10 +127,15 @@ phase() { # agent instructions
   log "phase: $agent"
   local args=(run --agent "$agent" --auto --archived --title "$slug: $agent")
   if [[ -n "$model" ]]; then args+=(-m "$model"); fi
-  opencode "${args[@]}" "$(brief)
+  local code=0
+  bin/with-timeout.sh "$((phase_timeout * 60))" opencode "${args[@]}" "$(brief)
 
-$instructions" 2>&1 | tee -a "$run_dir/$agent.log" ||
+$instructions" 2>&1 | tee -a "$run_dir/$agent.log" || code="${PIPESTATUS[0]}"
+  if ((code == 124)); then
+    log "the $agent phase was still running after $phase_timeout min and was stopped (see $run_dir/$agent.log)"
+  elif ((code != 0)); then
     log "opencode exited non-zero in the $agent phase (see $run_dir/$agent.log)"
+  fi
 }
 
 fix() { # what-went-wrong

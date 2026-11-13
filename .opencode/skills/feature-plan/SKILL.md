@@ -56,4 +56,5 @@ needs must be in the plan. Prefer the simplest design that meets every acceptanc
 - Edits to `.tscn` files: say which nodes to add, with type, parent, properties and position.
 - New state follows AGENTS.md rule 1; new controls rule 3.
 - Do not plan changes outside the feature's scope, or to the harness (`bin/`, `tools/`,
-  `.opencode/`, `tests/runner.gd`, `tests/test_case.gd`).
+  `.opencode/`, `tests/runner.gd`, `tests/test_case.gd`, `tests/parse_check.gd`,
+  `tests/scene_check.gd`), or to the `[debug]` warning levels in `project.godot`.

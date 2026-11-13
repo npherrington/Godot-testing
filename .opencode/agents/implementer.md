@@ -24,6 +24,9 @@ permissions:
   - action: edit
     resource: "*tests/parse_check.gd"
     effect: deny
+  - action: edit
+    resource: "*tests/scene_check.gd"
+    effect: deny
 ---
 
 You are the implementer for a Godot 4.7 game. You turn a plan into working code and tests.
