@@ -260,8 +260,11 @@ handoffs between models; the repo is set up so a single mid-size model can finis
 - **Context length is the first thing to check.** Ollama's default depends on VRAM, and can be as
   low as 4k tokens. Ollama recommends **at least 64k for agents and coding tools** (reported, from
   [docs.ollama.com/context-length](https://docs.ollama.com/context-length)). Set it server-wide
-  with `OLLAMA_CONTEXT_LENGTH=65536 ollama serve`, and confirm it in the `CONTEXT` column of
-  `ollama ps`. A truncated context looks like the model "forgetting" the plan halfway through.
+  with `OLLAMA_CONTEXT_LENGTH=65536 ollama serve`, or per model with a variant whose Modelfile sets
+  `PARAMETER num_ctx 65536` (this repo's choice; see the README). Confirm it in the `CONTEXT`
+  column of `ollama ps`. A truncated context looks like the model "forgetting" the plan halfway
+  through. Too large a default is the opposite trap: **checked** 2026-11-13, an uncapped Devstral
+  Small 2 24B Q8 on a 64 GB Mac loaded with a 256k context, 69 GB, 26% of it on the CPU.
 - **Memory is shared between the model and its context.** On Apple Silicon the GPU can use about
   three quarters of RAM by default. The model's weights and the context cache must both fit in that.
   A larger context costs several GB, so leave room for it when choosing a model.

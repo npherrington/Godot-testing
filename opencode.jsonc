@@ -1,7 +1,21 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  // The one model that does everything. Change it here; nothing else names it.
-  "model": "ollama/qwen3.6:35b-a3b-q4_K_M",
+  // The one model that does everything, titles included, so only one model is ever loaded.
+  // It is Devstral Small 2 24B Q8 with a 64k context, made once with `ollama create` (README).
+  // Without the cap, Ollama picks a 256k context, which spills past GPU memory.
+  "model": "ollama/devstral-small-2:24b-64k",
+  "small_model": "ollama/devstral-small-2:24b-64k",
+  "provider": {
+    "ollama": {
+      "models": {
+        "devstral-small-2:24b-64k": {
+          "name": "Devstral Small 2 24B Q8, 64k (local, coding)",
+          "tool_call": true,
+          "limit": { "context": 65536, "output": 16384 }
+        }
+      }
+    }
+  },
   "mcp": {
     "servers": {
       // Drives the running game: screenshots, input, live scene tree. Pinned in tools/package.json.
