@@ -6,7 +6,11 @@ description: Check acceptance criteria in the running game with the godot MCP to
 # Playtest
 
 You check what a player would see, in the real running game. Evidence comes from the game, never
-from reading code. One criterion at a time: **act, then read state, then look**.
+from reading code: a criterion you didn't see pass in the game is not passed. One criterion at a
+time: **act, then read state, then look**. The plan's Playtest section says where to go and what
+to expect.
+
+Don't change game files while playtesting. Write down what failed, stop the game, then fix.
 
 ## Tools
 
@@ -75,8 +79,8 @@ normal. Walls are at the arena edges (32 px thick).
 
 ## Result file
 
-First line exactly `VERDICT: PASS` (every criterion passed) or `VERDICT: FAIL`. Then one section per
-criterion:
+Write `runs/<feature>/playtest.md`. First line `VERDICT: PASS` (every criterion passed) or
+`VERDICT: FAIL`. Then one section per criterion:
 
 ```markdown
 VERDICT: FAIL

@@ -1,8 +1,8 @@
 # Architecture
 
-How the game is put together, and why it's shaped for agents. Agents build it unattended. Tests
-check it headless. A playtester agent checks it in a running window, reading state through the
-godot MCP. All three need the game to be **inspectable**: state in one known place, things
+How the game is put together, and why it's shaped for a coding model. The model builds it. Tests
+check it headless. A playtest checks it in a running window, reading state through the godot MCP.
+All three need the game to be **inspectable**: state in one known place, things
 findable by group, input through named actions. AGENTS.md rules 1 to 3 say this in short; this page
 explains it.
 
@@ -64,11 +64,11 @@ func snapshot() -> Dictionary:
 ### Why one place
 
 - **Tests** read `GameState.score`, and nothing else has to be found.
-- **The playtester** reads it live: `godot_run_script` returns `GameState.snapshot()` as JSON, and
+- **A playtest** reads it live: `godot_run_script` returns `GameState.snapshot()` as JSON, and
   `godot_simulate_input` can watch `/root/GameState:score` after every simulated input.
 - **Restarts are trivial:** `reset()` puts everything back. Node state is rebuilt anyway when
   the scene reloads.
-- **Reviewers** see every piece of game state in one file.
+- **Review** (yours or the model's) sees every piece of game state in one file.
 
 ### Rules for state
 
@@ -149,9 +149,9 @@ In order of preference (AGENTS.md rule 2):
 | Another scene's internals | **Don't.** Signal, group or `GameState` | |
 
 - Every kind of thing gets a group named after it, set on the scene root in its `.tscn`
-  (`groups=["coins"]`). Spawned instances inherit it. Tests and the playtester count by group.
+  (`groups=["coins"]`). Spawned instances inherit it. Tests and playtests count by group.
 - `get_node("/root/Main/World/Coins/Coin3")` and other long paths break the moment a node moves or
-  is renamed. The pipeline's reviewer rejects them.
+  is renamed. The self-review step in AGENTS.md checks for them.
 - The test harness uses `main.get_node("Player")`. That's a direct child of the scene the test
   spawned, which is fine.
 
@@ -184,7 +184,7 @@ Actions are defined in `project.godot` `[input]` and read with `Input` (AGENTS.m
 - A new control means a new action in `[input]` with a keyboard event, using a
   `physical_keycode`: `R` is 82, `Space` is 32, and Godot's own key constants cover the rest.
 - **Poll in `_process` / `_physics_process`.** Both the test harness (`Input.action_press`) and the
-  MCP playtester drive polled input. The harness doesn't trigger `_input()` callbacks
+  MCP playtest drive polled input. The harness doesn't trigger `_input()` callbacks
   ([TESTING_STANDARDS.md §7](TESTING_STANDARDS.md#7-input)).
 - Never `Input.is_key_pressed(KEY_R)` or keycodes in scripts.
 

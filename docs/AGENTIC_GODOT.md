@@ -1,8 +1,8 @@
 # Agentic Coding in Godot
 
-How coding agents build and verify a Godot game without a human watching: what works, what lies
-to you, and how this repo is set up for it. This is the state of things in **November 2026**:
-Godot 4.7.2, gdtoolkit 4.5.0, godot-mcp-runtime 4.0.1, OpenCode with local Ollama models.
+How one local coding model builds and verifies a Godot game: what works, what lies to you, and
+how this repo is set up for it. This is the state of things in **November 2026**: Godot 4.7.2,
+gdtoolkit 4.5.0, godot-mcp-runtime 4.0.1, OpenCode with a single Ollama model.
 
 Two kinds of claim appear here. **Checked** means it was run on 2026-11-13 against this repo's
 Godot 4.7.2 and tools. **Reported** means it comes from documentation or research, with the source
@@ -40,8 +40,6 @@ linked. Unmarked statements describe this repo, and can be checked by reading it
     can be overridden with `IMPORT_TIMEOUT` and similar variables.
   - Inside the test run, `tests/runner.gd` fails a test still running after **3600 physics
     frames** (60 s of game time), names it, and stops the run.
-  - In `bin/build-feature.sh`, each agent phase is stopped after `--phase-timeout` minutes
-    (default 90).
 - **Some scene mistakes are only warnings.** **Checked:** a `parent=` naming a missing node, or a
   node missing its `type=`, prints a `WARNING: ... vanished` and drops the node. Godot's exit code
   doesn't change, so the gate fails on that warning text. The `scenes` step also loads and
@@ -62,32 +60,35 @@ and each step's output is fed back verbatim.
 
 ### How this repo runs it
 
-`bin/build-feature.sh features/NNNN-name.md` runs each phase as a fresh `opencode run` session,
-with its own agent and only the tools that agent needs:
+One model, one OpenCode session per feature. `/feature features/NNNN-name.md` walks it through
+the steps in AGENTS.md ("Building a feature"), one at a time:
 
-| Phase | Agent | Reads | Writes | Tools |
-| --- | --- | --- | --- | --- |
-| Plan | `planner` | feature file, scenes, scripts | `runs/<f>/plan.md` (every name, path, number) | files |
-| Implement | `implementer` | plan, skills | scripts, scenes, tests | files, shell, `bin/check.sh` |
-| Gate | (script) | | `runs/<f>/check.txt` | `bin/check.sh` |
-| Playtest | `playtester` | criteria, plan's playtest notes | verdict + screenshots | **godot MCP** |
-| Review | `reviewer` | diff, criteria, AGENTS.md | APPROVE / CHANGES | files |
+| Step | Reads | Writes | Tools |
+| --- | --- | --- | --- |
+| Plan | feature file, scenes, scripts, `feature-plan` skill | `runs/<f>/plan.md` (every name, path, number), then **stops for your go-ahead** | files |
+| Build | plan, `gdscript-style` / `godot-scenes` / `godot-testing` skills | scripts, scenes, tests | files, shell |
+| Gate | `bin/check.sh` output | fixes | shell |
+| Playtest | criteria, plan's Playtest section, `godot-playtest` skill | `runs/<f>/playtest.md` + screenshots | **godot MCP** (7 tools) |
+| Self-review | `git diff`, criteria, AGENTS.md rules | fixes, a summary | files, shell |
 
-A failed gate, a `VERDICT: FAIL` or a `CHANGES` review goes back to the implementer, up to
-`--max-fixes` rounds (default 4). Phases pass work through `runs/<f>/handoff.md`, never through
-shared context. That keeps each session small enough for a local model.
+A failed gate or playtest goes back to Build. Nothing is committed; you play it and commit.
 
 ### Why it's shaped like this
 
-- **Fresh sessions per phase.** Local models degrade as context fills. A planner that already
-  read everything hands over a short, exact plan, and the implementer starts clean.
-- **The plan names everything** (`feature-plan` skill): every node, group, signal, file and number.
-  A smaller implementer model follows instructions well and invents badly.
-- **The gate is the definition of done** (AGENTS.md). Agents don't argue with it; they read it.
+- **Short sessions.** Local models degrade as context fills. One feature per session, and a new
+  session for the next one.
+- **The plan file is the memory.** It names everything (`feature-plan` skill): every node, group,
+  signal, file and number, with checkboxes ticked as work lands. If the context runs out or the
+  session restarts, the model rereads the plan instead of the chat.
+- **One step at a time, with a stop after the plan.** A small model does well following a short,
+  exact list and badly juggling several goals at once. Reviewing the plan's Decisions is the
+  cheapest place for you to catch a wrong turn.
+- **The gate is the definition of done** (AGENTS.md). The model doesn't argue with it; it reads it.
 - **Tests and playtest both**, because they catch different failures
   ([TESTING_STANDARDS.md §11](TESTING_STANDARDS.md#11-tests-and-the-playtest)).
-- **A separate reviewer** catches what passes every check but breaks a rule: long node paths,
-  state outside `GameState`, scope creep.
+- **A self-review against a fixed checklist** catches what passes every check but breaks a rule:
+  long node paths, state outside `GameState`, scope creep. It's weaker than a second reviewer,
+  which is why you play the result before you commit.
 
 ---
 
@@ -106,10 +107,10 @@ and fix that.
 | Tests | `bin/test.sh` | Behaviour, counts, timing, regressions | How it looks |
 | Smoke | main scene, 180 frames, headless | Errors on startup and in the first 3 s | Anything later or interactive |
 | Playtest | godot MCP in a real window | Visibility, layout, colour, real input feel | Exact timing; it's slow |
-| Review | a reading agent | Rule breaks, scope, design smells | Anything it doesn't read |
+| Self-review | the model reading its own diff | Rule breaks, scope, design smells | Its own blind spots: you play it before committing |
 
 The first seven are `bin/check.sh`, each Godot step with a time limit. Feed a failing step's
-**exact output** back to the agent.
+**exact output** back to the model.
 Godot 4.7's messages are specific enough to act on directly. **Checked:**
 
 ```
@@ -138,7 +139,7 @@ gdscript/warnings/missing_await=2
 the whole gate with these on. `missing_await=2` turns the most common test bug (calling
 `hold_action` without `await`) into a compile error.
 
-They also apply to the playtester's `run_script` code, which the MCP bridge compiles inside the
+They also apply to the playtest's `run_script` code, which the MCP bridge compiles inside the
 game. `return scene_tree.get_first_node_in_group("player").global_position` is rejected, and
 `(... as Node2D).global_position` works. The `godot-playtest` skill says so. The bridge script
 itself suppresses warnings, so it is unaffected.
@@ -147,14 +148,14 @@ itself suppresses warnings, so it is unaffected.
 `instance()`), but `tests/test_case.gd` calls `load(path).instantiate()` on an untyped
 `Resource`, so it stays off for now.
 
-These levels are part of the gate. AGENTS.md tells agents never to lower them, and the reviewer
-checks diffs against AGENTS.md.
+These levels are part of the gate. AGENTS.md says never to lower them, `opencode.jsonc` stops the
+model editing the harness, and the self-review checks the diff against AGENTS.md.
 
 ---
 
-## 4. Giving agents eyes: the godot MCP
+## 4. Giving the model eyes: the godot MCP
 
-The playtester drives the real game through **[godot-mcp-runtime](https://github.com/Erodenn/godot-mcp-runtime)**
+The playtest drives the real game through **[godot-mcp-runtime](https://github.com/Erodenn/godot-mcp-runtime)**
 (npm, pinned to 4.0.1 in `tools/package.json`, configured in `opencode.jsonc`). It needs Node 20+
 and Godot 4.5+.
 
@@ -173,7 +174,7 @@ removed when the game stops. Runtime tools talk to it.
 
 The package has 43 tools in all, including headless scene editing (`create_scene`, `add_node`,
 `save_scene`), profiling and project settings. Each tool's schema costs context, so `opencode.jsonc`
-denies `godot_*` to every agent except the playtester.
+denies `godot_*` and allows back only the 7 above.
 
 **Rules of thumb:**
 
@@ -198,15 +199,15 @@ denies `godot_*` to every agent except the playtester.
 | GDAI MCP | Editor plugin | Yes, via the editor | Proprietary licence |
 | LSP- and docs-based servers | Diagnostics, offline API docs | No | Useful alongside a runtime server |
 
-Editor-plugin servers need the Godot editor open, which doesn't suit unattended runs. That's why
-this repo uses a server that launches the game itself.
+Editor-plugin servers need the Godot editor open alongside the session. This repo uses a server
+that launches the game itself, so the model can start and stop it on its own.
 
 ---
 
 ## 5. Godot 3 habits and hallucinated APIs
 
 The full table is in [GDSCRIPT_STYLES.md §6](GDSCRIPT_STYLES.md#6-godot-4-api-not-godot-3). The
-key point for agents is **which mistakes the compiler catches**. **Checked** on 4.7.2:
+key point for a model is **which mistakes the compiler catches**. **Checked** on 4.7.2:
 
 | Caught at compile time (gate fails) | **Not** caught (fails at runtime, or never) |
 | --- | --- |
@@ -217,7 +218,7 @@ key point for agents is **which mistakes the compiler catches**. **Checked** on 
 | `Type?`, `for k, v in d`, `d.is_key()`, `@staticmethod`, `Array[int]()` | Wrong node paths in `$` / `get_node` |
 | A `class_name` that hides an autoload | Signals that are declared but never connected |
 
-The right column is why **typing matters more for agents than for people**. On a typed variable
+The right column is why **typing matters more for a model than for people**. On a typed variable
 the analyzer knows the class and rejects a missing method. On an untyped one it assumes a subclass
 might add it. The tests and the playtest catch the rest.
 
@@ -239,7 +240,7 @@ bin/godot --headless --dump-extension-api-with-docs     # writes ./extension_api
 bin/godot --headless --path . --gdscript-docs res://scripts --doctool /tmp/project-ref
 ```
 
-Grep one class's XML into the prompt when an agent is unsure of an API, rather than pasting the
+Grep one class's XML into the prompt when the model is unsure of an API, rather than pasting the
 whole thing:
 
 ```bash
@@ -251,32 +252,39 @@ Keep these dumps **outside the repo**; they're large and version-specific. Godot
 
 ---
 
-## 7. Local and small models
+## 7. One local model
 
-This pipeline runs on local models through Ollama (`opencode.jsonc`; each agent's model is in
-`.opencode/agents/*.md`, or set for a whole run with `--model=`).
+Everything runs on the one Ollama model named in `opencode.jsonc`. There are no subagents and no
+handoffs between models; the repo is set up so a single mid-size model can finish a feature.
 
 - **Context length is the first thing to check.** Ollama's default depends on VRAM, and can be as
   low as 4k tokens. Ollama recommends **at least 64k for agents and coding tools** (reported, from
   [docs.ollama.com/context-length](https://docs.ollama.com/context-length)). Set it server-wide
   with `OLLAMA_CONTEXT_LENGTH=65536 ollama serve`, and confirm it in the `CONTEXT` column of
-  `ollama ps`. A truncated context looks like an agent "forgetting" the plan halfway through.
-- **Fewer tools, smaller prompts.** Every MCP tool schema is context. Deny what a phase doesn't
-  need (this repo denies the 43 godot tools to all but the playtester), and let plain tool calls
-  do the work (`"codemode": false`).
-- **Skills over docs.** Agents load the short `.opencode/skills/*` files. These `docs/` pages are
-  the long form, for people and for planning; don't load them all into an implementer's context.
-- **Exact plans.** The planner may be bigger than the implementer. Every name and number decided
-  up front means the implementer never has to design.
+  `ollama ps`. A truncated context looks like the model "forgetting" the plan halfway through.
+- **Memory is shared between the model and its context.** On Apple Silicon the GPU can use about
+  three quarters of RAM by default. The model's weights and the context cache must both fit in that.
+  A larger context costs several GB, so leave room for it when choosing a model.
+- **Quality before size.** A higher-precision quant of a model that already fits (q8 instead of
+  q4) usually helps tool calls and exact edits more than a bigger model at q4. Mixture-of-experts
+  models (`...-a3b`) are fast because few weights are active per token. Dense models of the same
+  size are slower but steadier at multi-step work. On a Mac, reading a long prompt is the slow
+  part, and an agent re-sends its whole context every turn.
+- **Fewer tools, smaller prompts.** Every MCP tool schema is context. This repo turns off 36 of
+  the 43 godot tools and uses plain tool calls (`"codemode": false`).
+- **Skills over docs.** The model loads the short `.opencode/skills/*` files. These `docs/` pages
+  are the long form, for people; don't load them into the session.
+- **Plan first, then follow.** Deciding every name and number in `runs/<f>/plan.md` means the
+  build step never has to design, and the plan survives a restarted session.
 - **Feed errors back verbatim**, one at a time, first error first. Godot's cascading errors
   (one bad scene line produces five messages) confuse small models when given all at once.
-- **Bound everything.** Fix rounds (`--max-fixes`), playtest input batches (under about 20 s),
-  retries in game code, waits in tests. A small model in a loop with no limit burns the night,
-  and so does a gate that hangs (§1).
+- **Bound everything.** Three attempts at the same gate failure, then stop and ask. Playtest input
+  batches under about 20 s, retries in game code, waits in tests. A small model in a loop with no
+  limit goes nowhere, and so does a gate that hangs (§1).
 
 ---
 
-## 8. Agent pitfalls specific to Godot
+## 8. Model pitfalls specific to Godot
 
 | Pitfall | Do this instead |
 | --- | --- |
@@ -287,7 +295,7 @@ This pipeline runs on local models through Ollama (`opencode.jsonc`; each agent'
 | Global `randf()` in game code | `GameState.rng`, seeded in `reset()` |
 | Reading `_input()` events in game code | Poll actions in `_process` / `_physics_process`, so tests and the MCP can drive them |
 | Path case (`res://Scenes/Coin.tscn`) | Exact case. macOS forgives it; Linux CI doesn't |
-| `print()` left in for debugging | Remove it. Noisy output hides real errors from the next agent |
+| `print()` left in for debugging | Remove it. Noisy output hides real errors from the next run |
 | Trusting "All tests passed" | Trust `bin/check.sh`, which also fails on any engine error in the output |
 | Leaving the game running after a playtest | Always call `stop_project`, pass or fail |
 

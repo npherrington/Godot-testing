@@ -3,7 +3,7 @@
 How GDScript is written in this project: Godot **4.7.2**, statically typed, tabs, clean under
 **gdtoolkit 4.5.0** (`gdformat` + `gdlint`, run by `bin/check.sh`).
 
-The short version agents load is the `gdscript-style` skill (`.opencode/skills/gdscript-style/`).
+The short version the model loads is the `gdscript-style` skill (`.opencode/skills/gdscript-style/`).
 This page is the long form, with the reasons. If the two ever disagree, the skill wins and this page
 gets fixed.
 
@@ -288,7 +288,7 @@ var quick := str("hp=", hp, " max=", max_hp)  # str() concatenates its arguments
 
 - `%` and `format()` are clearer than `+` chains. `+` only joins strings, so `"a" + 1` is an error.
 - `print()` for temporary debugging only; remove it before you finish. The gate fails on errors, not
-  prints, but noisy output hides the real errors from the next agent.
+  prints, but noisy output hides the real errors from the next run.
 - `push_error("...")` for "this should never happen". It logs with a stack trace and execution
   continues. **The gate fails on any `ERROR:` line**, so `push_error` in a path that tests hit
   fails `bin/check.sh`. That's intended.

@@ -22,7 +22,7 @@ rule 6), and take names, numbers and sizes from the plan.
 | [Game over and restart](#game-over-and-restart) | `scripts/main.gd`, `project.godot` |
 | [Pure rules](#pure-rules) | `scripts/rules.gd` |
 | [Wiring into main.tscn](#wiring-into-maintscn) | `scenes/main.tscn` |
-| [Reading state from the playtester](#reading-state-from-the-playtester) | an MCP `run_script` |
+| [Reading state in a playtest](#reading-state-in-a-playtest) | an MCP `run_script` |
 
 ---
 
@@ -34,7 +34,7 @@ Every checkable value: a variable, a method that changes it and emits `changed`,
 ```gdscript
 extends Node
 ## Autoload "GameState": the one place game state lives.
-## Tests and the playtester read the game through snapshot(), so every feature
+## Tests and playtests read the game through snapshot(), so every feature
 ## that adds state (score, health, level, timers) adds it here and to snapshot().
 
 signal changed
@@ -106,7 +106,7 @@ Notes:
   which is why nothing else writes `health` directly.
 - `game_over` is a separate signal because listeners want the *event*. `changed` still fires, so
   the HUD redraws.
-- `snapshot()` reports counts by group (`coins_left`, `enemies`), so tests and the playtester don't
+- `snapshot()` reports counts by group (`coins_left`, `enemies`), so tests and playtests don't
   each count differently.
 
 ---
@@ -466,9 +466,9 @@ UI last is still the convention).
 
 ---
 
-## Reading state from the playtester
+## Reading state in a playtest
 
-The playtester agent reads the running game with the godot MCP's `godot_run_script`. The script
+A playtest reads the running game with the godot MCP's `godot_run_script`. The script
 must extend `RefCounted` and define `execute(scene_tree)`; whatever it returns comes back as JSON:
 
 ```gdscript

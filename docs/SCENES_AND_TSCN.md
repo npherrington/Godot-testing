@@ -1,11 +1,11 @@
 # Scenes and `.tscn` Files
 
-In this project, agents write scenes as text, without the editor. Godot is strict about the
+In this project, the model writes scenes as text, without the editor. Godot is strict about the
 format, and a bad scene fails the gate's `import` step. This page covers the format as Godot
 **4.7.2** reads and writes it, the rules that keep hand-written scenes loading, and how scenes are
 organised here.
 
-The short version agents load is the `godot-scenes` skill (`.opencode/skills/godot-scenes/`). If
+The short version the model loads is the `godot-scenes` skill (`.opencode/skills/godot-scenes/`). If
 this page and the skill disagree, the skill wins.
 
 Last checked against the engine: 2026-11-13 (scenes resaved with Godot 4.7.2 `ResourceSaver` to see
@@ -99,7 +99,7 @@ scenes/hud.tscn      scripts/hud.gd        score and health display
   (walls, background), and nothing that belongs to one kind of thing.
 - Many instances of one thing (coins, enemies) are **spawned from `main.gd`** with a preloaded scene,
   or listed as instance nodes in `main.tscn` when their positions are fixed. Either way, the scene
-  root carries the group (`coins`), so tests and the playtester can count them.
+  root carries the group (`coins`), so tests and playtests can count them.
 - A scene root's script should not reach into another scene's children. Talk through signals,
   groups or `GameState`.
 

@@ -1,6 +1,6 @@
 extends Node
 ## Autoload "GameState": the one place game state lives.
-## Tests and the playtester read the game through snapshot(), so every feature
+## Tests and playtests read the game through snapshot(), so every feature
 ## that adds state (score, health, level, timers) adds it here and to snapshot().
 
 signal changed

@@ -1,12 +1,12 @@
 ---
 name: feature-spec
-description: Write or improve a feature file in features/ so the build pipeline can take it end to end. Use when the user describes a feature to build, or asks to write or check a feature file.
+description: Write or improve a feature file in features/ so it can be built end to end with /feature. Use when the user describes a feature to build, or asks to write or check a feature file.
 ---
 
 # Feature file
 
-A feature file is the only input to `bin/build-feature.sh`. It says **what** the player gets and
-how to tell it works. It does not say how to build it; the planner decides that.
+A feature file is the input to `/feature`. It says **what** the player gets and how to tell it
+works. It does not say how to build it; that is decided later, in the plan.
 
 Name it `features/NNNN-short-name.md`, numbered after the highest existing file.
 
@@ -33,9 +33,9 @@ Five coins sit around the arena. Walking into one collects it and adds to a scor
 
 ## What makes criteria buildable
 
-- **Observable**: each one names something a test or a playtester can check (a number in
+- **Observable**: each one names something a test or a playtest can check (a number in
   `GameState`, a node count, text on screen), not a feeling ("feels responsive").
 - **Specific**: exact numbers and text ("adds 10", "Score: N"), not "some points".
 - **One behaviour each**, three to six per file. A bigger feature becomes several files built in order.
-- **Out of scope** stops the agents gold-plating. Notes hold hints (look, placement) that are
+- **Out of scope** stops gold-plating. Notes hold hints (look, placement) that are
   not requirements.

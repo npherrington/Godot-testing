@@ -1,5 +1,6 @@
 {
   "$schema": "https://opencode.ai/config.json",
+  // The one model that does everything. Change it here; nothing else names it.
   "model": "ollama/qwen3.6:35b-a3b-q4_K_M",
   "mcp": {
     "servers": {
@@ -9,7 +10,7 @@
         "command": ["node", "tools/node_modules/godot-mcp-runtime/dist/index.js"],
         "environment": {
           "GODOT_PATH": "/Applications/Godot.app/Contents/MacOS/Godot",
-          // Unattended runs have nobody to click "allow" on the first launch.
+          // Skip the "allow" prompt on the first launch.
           "GODOT_MCP_DISABLE_ELICITATION": "true"
         },
         // Plain tool calls; local models handle these better than Code Mode.
@@ -26,8 +27,24 @@
     { "action": "skill", "resource": "godot-playtest", "effect": "allow" },
     { "action": "skill", "resource": "feature-plan", "effect": "allow" },
     { "action": "skill", "resource": "feature-spec", "effect": "allow" },
-    // The Godot MCP has 43 tools; each costs context. Off here, on for the playtester only.
+    // The Godot MCP has 43 tools; each costs context. Only the 7 a playtest needs are on.
     { "action": "godot_*", "resource": "*", "effect": "deny" },
+    { "action": "godot_run_project", "resource": "*", "effect": "allow" },
+    { "action": "godot_stop_project", "resource": "*", "effect": "allow" },
+    { "action": "godot_take_screenshot", "resource": "*", "effect": "allow" },
+    { "action": "godot_simulate_input", "resource": "*", "effect": "allow" },
+    { "action": "godot_get_ui_elements", "resource": "*", "effect": "allow" },
+    { "action": "godot_run_script", "resource": "*", "effect": "allow" },
+    { "action": "godot_get_debug_output", "resource": "*", "effect": "allow" },
+    // The harness: the model must not edit what checks its work.
+    { "action": "edit", "resource": "*bin/*", "effect": "deny" },
+    { "action": "edit", "resource": "*tools/*", "effect": "deny" },
+    { "action": "edit", "resource": "*.opencode/*", "effect": "deny" },
+    { "action": "edit", "resource": "*opencode.jsonc", "effect": "deny" },
+    { "action": "edit", "resource": "*tests/runner.gd", "effect": "deny" },
+    { "action": "edit", "resource": "*tests/test_case.gd", "effect": "deny" },
+    { "action": "edit", "resource": "*tests/parse_check.gd", "effect": "deny" },
+    { "action": "edit", "resource": "*tests/scene_check.gd", "effect": "deny" },
     { "action": "shell", "resource": "git push*", "effect": "deny" },
     { "action": "shell", "resource": "git reset --hard*", "effect": "deny" },
     { "action": "shell", "resource": "git clean*", "effect": "deny" }

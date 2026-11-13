@@ -4,7 +4,7 @@ How tests are written and run in this project: a small headless runner (`tests/r
 base class with a handful of helpers (`tests/test_case.gd`), and one rule. **Every acceptance
 criterion gets a test** (AGENTS.md rule 4).
 
-The short version agents load is the `godot-testing` skill. If this page and the skill disagree,
+The short version the model loads is the `godot-testing` skill. If this page and the skill disagree,
 the skill wins.
 
 Last checked: 2026-11-13. Every test on this page was run against Godot 4.7.2 with this repo's
@@ -196,7 +196,7 @@ Conventions:
 In order of preference:
 
 1. **`GameState`**: `GameState.score`, or `GameState.snapshot()["coins_left"]`. It's the source of
-   truth, and it's what the playtester reads too, so test and playtest agree.
+   truth, and it's what the playtest reads too, so test and playtest agree.
 2. **Groups:** `tree.get_nodes_in_group("coins").size()`, `get_first_node_in_group("player")`.
 3. **A node the scene owns directly**, by name or unique name: `main.get_node("Player")`,
    `hud.get_node("%Score")`.
@@ -221,7 +221,7 @@ func test_score_label_is_top_left() -> void:
 	check(rect.position.x < 100 and rect.position.y < 100, "label at %s" % rect.position)
 ```
 
-What the label *looks* like (readable, not covered) is the playtester's job, with a screenshot.
+What the label *looks* like (readable, not covered) is the playtest's job, with a screenshot.
 
 **Check the effect and the absence of the wrong effect.** The score went up by exactly 10. The
 coin is gone. Walking over the spot again adds nothing.
@@ -428,13 +428,13 @@ the rule is wired in.
 
 ## 11. Tests and the playtest
 
-The pipeline checks each feature twice: these tests in `bin/check.sh`, then a playtester agent
-that runs the real game through the godot MCP (`godot-playtest` skill). They catch different
+Each feature is checked twice: these tests in `bin/check.sh`, then a playtest that runs the real
+game through the godot MCP (`godot-playtest` skill). They catch different
 things:
 
 | | Headless tests | Playtest |
 | --- | --- | --- |
-| Runs | Every gate, in seconds | Once per feature run, in a real window |
+| Runs | Every gate, in seconds | Once per feature, in a real window |
 | Sees | `GameState`, nodes, groups, label text | The rendered screen (screenshots), debug output |
 | Catches | Logic, counts, timing, regressions | Invisible or covered UI, wrong colours, things off-screen, errors only a real window shows |
 | Can't do | Rendering: headless uses a dummy renderer, so no screenshots | Exact timing; it's slow |
@@ -460,7 +460,7 @@ Both read `GameState.snapshot()`. Anything a criterion needs is in it (AGENTS.md
 
 ## 13. Beyond this runner
 
-The custom runner is deliberate: nothing to version-pin against Godot releases, and output an agent
+The custom runner is deliberate: nothing to version-pin against Godot releases, and output a model
 parses easily. If the project outgrows it (it needs orphan-node checks, signal watchers, JUnit
 output for CI), the maintained frameworks as of November 2026 are:
 
@@ -469,7 +469,7 @@ output for CI), the maintained frameworks as of November 2026 are:
 | [GUT](https://github.com/bitwes/Gut) | 9.7.x (`godot_4_7` branch) | `godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://test -gexit` |
 | [gdUnit4](https://github.com/godot-gdunit-labs/gdUnit4) | 6.2.x (Godot 4.5 to 4.7.1); 7.0 in development | `addons/gdUnit4/runtest.sh -a res://test` (exit 100 on failure) |
 
-Switching frameworks is a harness change (AGENTS.md: agents don't edit the harness), so it's a
+Switching frameworks is a harness change (AGENTS.md: the model doesn't edit the harness), so it's a
 decision for the repo owner. Whatever runs the tests, keep this runner's properties: a per-test
 limit, failing when nothing ran, and failing on engine errors in the output.
 

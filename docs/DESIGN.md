@@ -1,13 +1,14 @@
 # Design and Docs Index
 
-Start here. This folder is the long-form reference for how the game is built. Agents load the
-short versions, so use this table to decide which page answers which question.
+Start here. This folder is the long-form reference for how the game is built, for people. The
+model in OpenCode loads the short versions, so use this table to decide which page answers which
+question.
 
 | Who | Reads |
 | --- | --- |
-| Every agent, every session | `AGENTS.md` (rules, commands, layout) |
-| Agents, on demand | `.opencode/skills/*/SKILL.md`: `gdscript-style`, `godot-scenes`, `godot-testing`, `godot-playtest`, `feature-plan`, `feature-spec` |
-| People, planners, reviewers | These pages |
+| The model, every session | `AGENTS.md` (commands, layout, the build steps, rules) |
+| The model, on demand | `.opencode/skills/*/SKILL.md`: `gdscript-style`, `godot-scenes`, `godot-testing`, `godot-playtest`, `feature-plan`, `feature-spec` |
+| You | These pages. Don't point the model at them: they're too long for a local model's context |
 
 **Precedence:** `AGENTS.md`, then the skills, then these pages. If a page here contradicts a skill
 or AGENTS.md, the page is wrong: fix it.
@@ -16,7 +17,7 @@ or AGENTS.md, the page is wrong: fix it.
 
 | Page | Answers |
 | --- | --- |
-| [AGENTIC_GODOT.md](AGENTIC_GODOT.md) | How agents build and verify Godot work: the loop, the gate, the godot MCP, what the compiler catches, local-model tips |
+| [AGENTIC_GODOT.md](AGENTIC_GODOT.md) | How one local model builds and verifies Godot work: the loop, the gate, the godot MCP, what the compiler catches, choosing and running the model |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Where state lives (`GameState`), signals, finding nodes, scene lifecycle, input, determinism |
 | [GDSCRIPT_STYLES.md](GDSCRIPT_STYLES.md) | GDScript conventions for Godot 4.7: order, naming, typing, newer syntax, Godot 3 → 4 |
 | [SCENES_AND_TSCN.md](SCENES_AND_TSCN.md) | The `.tscn` text format, writing scenes by hand, this project's scenes, `.uid` files |
@@ -33,9 +34,9 @@ harness on 2026-11-13. Each says what was checked.
 
 1. **The gate is the definition of done.** `bin/check.sh` passes, or the change isn't finished.
 2. **Inspectable over clever.** State on `GameState`, things in groups, input through actions
-   (AGENTS.md rules 1 to 3), so tests and the playtester can see everything a criterion is about.
+   (AGENTS.md rules 1 to 3), so tests and playtests can see everything a criterion is about.
 3. **Every acceptance criterion gets a test** that fails without the feature (rule 4).
-4. **Typed GDScript, current Godot 4 API.** The compiler is the cheapest reviewer an agent has
+4. **Typed GDScript, current Godot 4 API.** The compiler is the cheapest reviewer the model has
    (rule 5).
 5. **The simplest thing that meets the criteria** (rule 6). No pools, layers or managers until a
    feature needs one.

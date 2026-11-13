@@ -1,7 +1,8 @@
 # Godot Lab
 
-A 2D Godot game built by local coding agents (OpenCode + Ollama). You write feature files; a
-pipeline plans, implements, tests, playtests and reviews each one, and commits it on a branch.
+A 2D Godot game built with one local model in OpenCode (via Ollama). You write a feature file; the
+model plans it, builds it, runs the gate, playtests it in the running game and reviews its own
+diff, all in one session. You commit.
 
 ## Setup (once)
 
@@ -12,40 +13,40 @@ bin/setup.sh                  # pinned godot-mcp-runtime + gdtoolkit, imports th
 bin/check.sh                  # should print seven "ok" lines
 ```
 
-Ollama must be running with the models named in `.opencode/agents/*.md`.
+Ollama must be running with the model named in `opencode.jsonc`, with enough context for a coding
+agent. The default can be as low as 4k tokens, and a model that runs out "forgets" the plan:
+
+```bash
+OLLAMA_CONTEXT_LENGTH=65536 ollama serve
+ollama ps                     # once the model is loaded: CONTEXT should read 65536
+```
 
 ## Building a feature
 
-1. Write `features/NNNN-name.md` from `features/TEMPLATE.md` (or run `opencode`, then
-   `/spec <idea>`). Acceptance criteria must be checkable: numbers, counts, text on screen.
-2. Run it unattended:
+1. Write `features/NNNN-name.md` from `features/TEMPLATE.md`, or run `opencode` and type
+   `/spec <idea>`. Acceptance criteria must be checkable: numbers, counts, text on screen.
+   Three to six criteria per file; split bigger ideas into several files.
+2. In `opencode`, run `/feature features/NNNN-name.md`. It writes `runs/<name>/plan.md` and stops
+   so you can check its decisions. Say go, and it builds, runs `bin/check.sh` until it passes,
+   playtests each criterion in the running game, and reviews its own diff.
+3. Play it yourself: `bin/godot --path .`, or open the project in the Godot editor. Then commit.
 
-   ```bash
-   bin/build-feature.sh features/0001-coins-and-score.md
-   ```
+Start a **new session for each feature**. A local model does best with a short context, and the
+plan file in `runs/` carries everything forward if a session has to restart.
 
-   plan → implement → gate (`bin/check.sh`) → playtest in the running game → review → commit on
-   `feature/<name>`. A failed gate, playtest or review goes back to the implementer, up to 4 rounds.
-   An agent phase still running after 90 minutes is stopped (`--phase-timeout=<minutes>`), and
-   every Godot run inside the gate has its own time limit, so a hang can't stall the night.
-   Everything it wrote and saw is in `runs/<name>/` (`handoff.md` first).
-3. Play it yourself: `bin/godot --path .`, or open the project in the Godot editor. Merge the branch
-   when you're happy: `git switch main && git merge feature/<name>`.
-
-Or work attended: `opencode`, then `/feature features/0002-....md`, and it stops for your go-ahead
-on the plan.
+Other commands: `/playtest <feature file or description>` checks the running game without changing
+anything.
 
 ## How it fits together
 
 | Piece | Where | Role |
 | --- | --- | --- |
-| Agents | `.opencode/agents/` | planner, implementer, playtester, reviewer: each limited to what its job needs |
-| Skills | `.opencode/skills/` | GDScript style, writing `.tscn` by hand, tests, playtesting, plans, feature files |
-| Gate | `bin/check.sh` | format, lint, import, parse, scenes, tests, smoke run: the definition of done. Strict GDScript warnings (`project.godot` `[debug]`) are errors |
-| Tests | `tests/` | headless runner; `bin/test.sh [filter]` |
-| Game driver | `godot` MCP (godot-mcp-runtime, pinned in `tools/`) | run the game, input, read state, screenshots |
-| Pipeline | `bin/build-feature.sh` | runs the phases as separate sessions, passing a handoff file |
-| Rules | `AGENTS.md` | loaded by every agent |
+| Rules | `AGENTS.md` | Loaded every session: commands, layout, the build steps, the rules |
+| Skills | `.opencode/skills/` | Short guides the model loads when it needs them: GDScript style, `.tscn` by hand, tests, playtesting, plans, feature files |
+| Commands | `.opencode/commands/` | `/spec`, `/feature`, `/playtest` |
+| Gate | `bin/check.sh` | Format, lint, import, parse, scenes, tests, smoke run: the definition of done. Strict GDScript warnings (`project.godot` `[debug]`) are errors |
+| Tests | `tests/` | Headless runner; `bin/test.sh [filter]` |
+| Game driver | `godot` MCP (godot-mcp-runtime, pinned in `tools/`) | Run the game, send input, read state, take screenshots |
+| Reference | `docs/` | The long versions, for you. Start at [docs/DESIGN.md](docs/DESIGN.md) |
 
-Change an agent's model in its frontmatter, or the whole run's with
-`bin/build-feature.sh --model=ollama/<model> ...`.
+To change the model, edit `"model"` in `opencode.jsonc`. Nothing else names it.

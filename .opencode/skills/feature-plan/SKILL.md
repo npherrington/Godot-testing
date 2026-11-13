@@ -1,21 +1,23 @@
 ---
 name: feature-plan
-description: Write an implementation plan for a feature file, precise enough that an implementer can follow it without guessing. Use when planning a feature.
+description: Write a short implementation plan for a feature file before building it, so you can follow it step by step and pick it up again after a long or restarted session. Use when starting a feature.
 ---
 
 # Feature plan
 
-The implementer is a smaller model working from your plan alone. Every name, path and number it
-needs must be in the plan. Prefer the simplest design that meets every acceptance criterion.
+The plan is your memory. A long session loses detail; the plan file doesn't. Decide every name,
+path and number now, so building is following, not designing. Prefer the simplest design that
+meets every acceptance criterion.
 
 ## Steps
 
 1. Read the feature file. List its acceptance criteria, numbered as in the file.
 2. Read the files the feature touches (at least `scenes/main.tscn`, `scripts/main.gd`,
-   `scripts/game_state.gd`, and any scene or script it names).
+   `scripts/game_state.gd`, and any scene or script it names). Don't plan changes to files you
+   haven't read.
 3. Decide anything the feature leaves open (sizes, positions, colours, counts) and record each
-   decision in the plan's Decisions section.
-4. Write the plan in the format below.
+   decision in the Decisions section.
+4. Write `runs/<feature>/plan.md` in the format below. Keep it under about 60 lines.
 
 ## Format
 
@@ -30,31 +32,30 @@ needs must be in the plan. Prefer the simplest design that meets every acceptanc
 - <what the feature left open, and what you chose>
 
 ## Changes
-### scripts/game_state.gd (edit)
-- Add `var score := 0`. In `reset()`, set `score = 0`. Add `func add_score(amount: int) -> void`
-  that adds and emits `changed`. Add `"score": score` to `snapshot()`.
-### scenes/coin.tscn (new)
-- Root `Coin` (Area2D, group `coins`, script `res://scripts/coin.gd`), child `Body` (Polygon2D,
-  gold, 16x16), child `Collision` (CollisionShape2D, CircleShape2D radius 10).
-### ...
+- [ ] scripts/game_state.gd (edit): add `var score := 0`; reset in `reset()`; add
+      `func add_score(amount: int) -> void` that adds and emits `changed`; add `"score"` to `snapshot()`.
+- [ ] scenes/coin.tscn (new): root `Coin` (Area2D, group `coins`, script `res://scripts/coin.gd`),
+      child `Body` (Polygon2D, gold, 16x16), child `Collision` (CollisionShape2D, CircleShape2D r=10).
+- [ ] ...
 
 ## Tests
-### tests/test_coins.gd (new)
-- `test_collecting_a_coin_adds_ten_to_the_score` (criterion 1): spawn main, put the player 60 px
-  left of the first coin, hold move_right 30 frames, expect `GameState.score == 10`.
-- ...
+- [ ] tests/test_coins.gd `test_collecting_a_coin_adds_ten_to_the_score` (criterion 2): spawn main,
+      put the player 60 px left of the first coin, hold move_right 30 frames, expect score 10.
+- [ ] ...
 
-## Playtest notes
-- How a playtester reaches and checks each criterion in the running game (positions to steer to,
-  what to read from `GameState.snapshot()`, what should be on screen).
+## Playtest
+- Criterion 2: steer to the coin at (x, y); expect `snapshot().score` 0 -> 10, coins 5 -> 4.
+- ...
 ```
+
+Tick the boxes (`- [x]`) as you finish each change, so the plan shows where you are.
 
 ## Rules
 
-- Every criterion maps to at least one test and a playtest note.
+- Every criterion maps to at least one test and one playtest line.
 - Name every new node, group, signal, action, variable and file exactly.
-- Edits to `.tscn` files: say which nodes to add, with type, parent, properties and position.
+- For `.tscn` edits, say which nodes to add, with type, parent, properties and position.
 - New state follows AGENTS.md rule 1; new controls rule 3.
-- Do not plan changes outside the feature's scope, or to the harness (`bin/`, `tools/`,
-  `.opencode/`, `tests/runner.gd`, `tests/test_case.gd`, `tests/parse_check.gd`,
-  `tests/scene_check.gd`), or to the `[debug]` warning levels in `project.godot`.
+- Don't plan changes outside the feature's scope, to the harness (`bin/`, `tools/`, `.opencode/`,
+  `tests/runner.gd`, `tests/test_case.gd`, `tests/parse_check.gd`, `tests/scene_check.gd`), or to
+  the `[debug]` warning levels in `project.godot`.
