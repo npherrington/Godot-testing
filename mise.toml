@@ -1,0 +1,93 @@
+# mise tasks for the game. Run `mise tasks` to list them.
+#   mise run dev:game        play the game
+#   mise run dev:editor      open the project in the Godot editor
+#   mise run dev:ollama      serve Ollama for OpenCode (leave it running in its own terminal)
+#   mise run dev:patches     the FM patch designer (apps/mega-drive-audio-patterns)
+#   mise run check           the gate: format, lint, import, parse, scenes, tests, smoke
+#   mise run test [filter]   headless tests, optionally only files or methods matching filter
+#   mise run art             rebuild every sprite, tile and font in assets/ from art/
+#   mise run audio           rebuild the sound effects and music
+#   mise run setup:model     once: download Devstral and make the 64k-context variant OpenCode uses
+# Godot itself comes from Homebrew (brew install --cask godot); bin/godot finds it.
+
+[tools]
+# The GitHub release of Ollama, not Homebrew's formula (that build lacks libollama_xgrammar).
+# Same version as the latitude checkout, so mise shares one install and one model store.
+"github:ollama/ollama" = "0.40.12"
+
+[env]
+# The model opencode.jsonc names: Devstral Small 2 24B Q8 with its context capped at 64k.
+GAME_MODEL = "devstral-small-2:24b-64k"
+GAME_MODEL_BASE = "devstral-small-2:24b-instruct-2512-q8_0"
+
+[tasks."dev:ollama"]
+description = "Serve Ollama on :11434 for OpenCode, or use one already running and take over if it stops"
+run = '''
+pid=
+trap 'kill "$pid" 2>/dev/null; exit 0' INT TERM
+announced=no
+checked=no
+while :; do
+  if curl -sf --max-time 1 http://localhost:11434/api/version > /dev/null; then
+    if [ "$announced" = no ]; then
+      echo "Ollama is serving :11434; using it, and serving here if it stops."
+      announced=yes
+    fi
+    if [ "$checked" = no ]; then
+      if ollama show "$GAME_MODEL" > /dev/null 2>&1; then
+        echo "Model $GAME_MODEL is ready."
+      else
+        echo "Model $GAME_MODEL is missing: run mise run setup:model"
+      fi
+      checked=yes
+    fi
+    sleep 5 & pid=$!
+    wait "$pid" || true
+  else
+    announced=no
+    ollama serve & pid=$!
+    wait "$pid" || true
+    # A serve that exits at once (another checkout took the port) gets a beat before the recheck
+    sleep 1
+  fi
+done
+'''
+
+[tasks."setup:model"]
+description = "Download Devstral Small 2 24B Q8 and create the 64k-context variant (needs dev:ollama running)"
+run = '''
+ollama pull "$GAME_MODEL_BASE"
+modelfile="${TMPDIR:-/tmp}/Modelfile.$GAME_MODEL"
+printf 'FROM %s\nPARAMETER num_ctx 65536\n' "$GAME_MODEL_BASE" > "$modelfile"
+ollama create "$GAME_MODEL" -f "$modelfile"
+ollama show "$GAME_MODEL" --parameters | grep num_ctx  # expect 65536
+'''
+
+[tasks."dev:game"]
+description = "Play the game"
+run = "bin/godot --path ."
+
+[tasks."dev:editor"]
+description = "Open the project in the Godot editor (F5 plays)"
+run = "bin/godot -e --path ."
+
+[tasks."dev:patches"]
+description = "FM patch designer at http://localhost:5173 (its own mise.toml pins Node)"
+dir = "apps/mega-drive-audio-patterns"
+run = "mise run dev"
+
+[tasks.check]
+description = "The gate: a change is done only when this passes"
+run = "bin/check.sh"
+
+[tasks.test]
+description = "Headless tests; pass a filter to run only matching files or methods"
+run = "bin/test.sh"
+
+[tasks.art]
+description = "Rebuild sprites, tiles, UI and fonts in assets/ from art/"
+run = "python3 art/build.py"
+
+[tasks.audio]
+description = "Rebuild sound effects and music in assets/sounds/"
+run = "python3 art/audio/build_audio.py"
