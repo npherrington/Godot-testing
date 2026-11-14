@@ -1,0 +1,55 @@
+# mise: pins Node for this app and defines its tasks.
+#   mise install          install the pinned Node
+#   mise run dev          dev server with hot reload, at http://localhost:5173
+#   mise run build        production build into dist/
+#   mise run start        build, then serve dist/ at http://localhost:4173
+#   mise run check        typecheck, lint, test and build: run before calling a change done
+#   mise tasks            list every task
+# Every task installs npm packages first when package.json or package-lock.json changed.
+
+[tools]
+node = "24.22.3"
+
+[tasks.install]
+description = "Install npm packages (skipped when package-lock.json hasn't changed)"
+run = "npm ci --no-audit --no-fund"
+sources = ["package.json", "package-lock.json"]
+outputs = ["node_modules/.package-lock.json"]
+
+[tasks.dev]
+description = "Dev server with hot reload; Save writes patches to art/audio/patches/"
+depends = ["install"]
+run = "npm run dev"
+
+[tasks.build]
+description = "Typecheck and build the production bundle into dist/"
+depends = ["install"]
+run = "npm run build"
+
+[tasks.start]
+description = "Build, then serve the production bundle (Save works here too)"
+depends = ["build"]
+run = "npm run preview"
+
+[tasks.test]
+description = "Unit tests, including the check that the app and the Python synth make the same samples"
+depends = ["install"]
+run = "npm test"
+
+[tasks.typecheck]
+description = "TypeScript type check"
+depends = ["install"]
+run = "npm run typecheck"
+
+[tasks.lint]
+description = "oxlint"
+depends = ["install"]
+run = "npm run lint"
+
+[tasks.check]
+description = "Everything: typecheck, lint, test, build"
+depends = ["typecheck", "lint", "test", "build"]
+
+[tasks.fixtures]
+description = "Re-render the Python reference samples the tests compare against (after changing art/audio/fm.py)"
+run = "python3 ../../art/audio/fm.py --fixture src/synth/__fixtures__/python_reference.json"

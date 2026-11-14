@@ -1,0 +1,19 @@
+{
+  "format": "fm-patch/1",
+  "name": "monster_growl",
+  "ratio": 0.5,
+  "feedback": 0.2,
+  "level": 0.85,
+  "amp": {
+    "attack": 0.03,
+    "decay": 1.5,
+    "sustain": 0.7,
+    "release": 0.25
+  },
+  "index": {
+    "shape": "wobble",
+    "center": 3,
+    "depth": 2.5,
+    "rate": 7
+  }
+}

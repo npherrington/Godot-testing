@@ -1,0 +1,21 @@
+{
+  "format": "fm-patch/1",
+  "name": "reed",
+  "ratio": 2,
+  "feedback": 0.1,
+  "level": 0.75,
+  "amp": {
+    "attack": 0.04,
+    "decay": 1.0,
+    "sustain": 0.85,
+    "release": 0.12
+  },
+  "index": {
+    "shape": "envelope",
+    "peak": 2.5,
+    "attack": 0.08,
+    "decay": 0.8,
+    "sustain": 0.7,
+    "release": 0.15
+  }
+}

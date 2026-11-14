@@ -1,0 +1,19 @@
+{
+  "format": "fm-patch/1",
+  "name": "slap_bass",
+  "ratio": 1,
+  "feedback": 0.6,
+  "level": 0.85,
+  "amp": {
+    "attack": 0.002,
+    "decay": 1.5,
+    "sustain": 0.35,
+    "release": 0.08
+  },
+  "index": {
+    "shape": "decay",
+    "start": 7,
+    "end": 1.2,
+    "tau": 0.06
+  }
+}

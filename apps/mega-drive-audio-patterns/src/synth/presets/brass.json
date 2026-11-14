@@ -1,0 +1,21 @@
+{
+  "format": "fm-patch/1",
+  "name": "brass",
+  "ratio": 1,
+  "feedback": 0.3,
+  "level": 0.75,
+  "amp": {
+    "attack": 0.03,
+    "decay": 2.0,
+    "sustain": 0.8,
+    "release": 0.2
+  },
+  "index": {
+    "shape": "envelope",
+    "peak": 4.5,
+    "attack": 0.06,
+    "decay": 0.6,
+    "sustain": 0.6,
+    "release": 0.2
+  }
+}

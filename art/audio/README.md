@@ -19,7 +19,25 @@ python3 art/audio/verify_audio.py                   # measure all files, exit 1 
   - `sfx.py`: the sound effects.
   - `tracks.py`: the music, written in a small note notation.
   - `music.py`: the sequencer and instruments.
+  - `fm.py`: the FM instrument, playing patches from `patches/` (see below).
 - `--levels` prints each music part's loudness, which is how the mixes were balanced.
+
+## FM patches
+
+`fm.py` is a two-operator FM voice, like the Mega Drive's chip. Design its patches in the
+browser app in `apps/mega-drive-audio-patterns` (`mise run dev` there). Its **Save to game**
+button writes `patches/<name>.json`. The app and `fm.py` produce the same 16-bit samples, and
+the app's tests check that.
+
+```python
+from fm import fm
+bass = Voice(s, fm, 'bass', patch='slap_bass', gain=0.5)   # in tracks.py
+```
+
+```sh
+python3 art/audio/fm.py --list                              # saved patches and presets
+python3 art/audio/fm.py slap_bass --note A2 --gate 0.4      # one note to art/out/audio/
+```
 
 ## Looping in Godot
 

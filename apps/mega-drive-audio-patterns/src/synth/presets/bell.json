@@ -1,0 +1,19 @@
+{
+  "format": "fm-patch/1",
+  "name": "bell",
+  "ratio": 3.5,
+  "feedback": 0,
+  "level": 0.7,
+  "amp": {
+    "attack": 0.001,
+    "decay": 3.0,
+    "sustain": 0,
+    "release": 1.5
+  },
+  "index": {
+    "shape": "decay",
+    "start": 5,
+    "end": 0.5,
+    "tau": 0.6
+  }
+}

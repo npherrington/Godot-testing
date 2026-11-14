@@ -1,0 +1,17 @@
+{
+  "format": "fm-patch/1",
+  "name": "saw_lead",
+  "ratio": 1,
+  "feedback": 0.9,
+  "level": 0.7,
+  "amp": {
+    "attack": 0.01,
+    "decay": 0.8,
+    "sustain": 0.7,
+    "release": 0.15
+  },
+  "index": {
+    "shape": "constant",
+    "value": 1.8
+  }
+}

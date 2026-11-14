@@ -1,0 +1,17 @@
+{
+  "format": "fm-patch/1",
+  "name": "metal_hit",
+  "ratio": 1.41,
+  "feedback": 0,
+  "level": 0.8,
+  "amp": {
+    "attack": 0.001,
+    "decay": 0.6,
+    "sustain": 0,
+    "release": 0.1
+  },
+  "index": {
+    "shape": "formula",
+    "expr": "6*exp(-12*t) + 0.6"
+  }
+}

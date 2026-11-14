@@ -1,0 +1,19 @@
+{
+  "format": "fm-patch/1",
+  "name": "electric_piano",
+  "ratio": 1,
+  "feedback": 0,
+  "level": 0.8,
+  "amp": {
+    "attack": 0.002,
+    "decay": 2.5,
+    "sustain": 0,
+    "release": 0.3
+  },
+  "index": {
+    "shape": "decay",
+    "start": 3.5,
+    "end": 0.3,
+    "tau": 0.25
+  }
+}
