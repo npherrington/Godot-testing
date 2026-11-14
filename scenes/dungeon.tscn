@@ -1,0 +1,20 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/dungeon.gd" id="1_dungeon"]
+[ext_resource type="TileSet" path="res://assets/tilesets/tileset_dungeon.tres" id="2_tileset"]
+
+[node name="Dungeon" type="Node2D" groups=["dungeon"]]
+z_index = -10
+script = ExtResource("1_dungeon")
+
+[node name="Floor" type="TileMapLayer" parent="."]
+tile_set = ExtResource("2_tileset")
+collision_enabled = false
+
+[node name="Shadows" type="TileMapLayer" parent="."]
+tile_set = ExtResource("2_tileset")
+collision_enabled = false
+
+[node name="Walls" type="TileMapLayer" parent="."]
+tile_set = ExtResource("2_tileset")
+collision_enabled = false

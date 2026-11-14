@@ -1,0 +1,45 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/checkpoint.gd" id="1_checkpoint"]
+[ext_resource type="SpriteFrames" path="res://assets/sprites/environment/decor_candles_lit.tres" id="2_candles"]
+[ext_resource type="Texture2D" path="res://assets/sprites/environment/light_torch.png" id="3_light"]
+
+[node name="Checkpoint" type="Node2D" groups=["checkpoints"]]
+z_index = -5
+script = ExtResource("1_checkpoint")
+
+[node name="Rune" type="Polygon2D" parent="."]
+position = Vector2(0, -10)
+polygon = PackedVector2Array(0, -9, 9, 0, 0, 9, -9, 0, 0, -9, 0, -5, -5, 0, 0, 5, 5, 0, 0, -5)
+
+[node name="Candles" type="Node2D" parent="."]
+
+[node name="CandleNW" type="AnimatedSprite2D" parent="Candles"]
+position = Vector2(-11, -20)
+sprite_frames = ExtResource("2_candles")
+animation = &"default"
+offset = Vector2(0, -8)
+
+[node name="CandleNE" type="AnimatedSprite2D" parent="Candles"]
+position = Vector2(11, -20)
+sprite_frames = ExtResource("2_candles")
+animation = &"default"
+offset = Vector2(0, -8)
+
+[node name="CandleSW" type="AnimatedSprite2D" parent="Candles"]
+position = Vector2(-11, 4)
+sprite_frames = ExtResource("2_candles")
+animation = &"default"
+offset = Vector2(0, -8)
+
+[node name="CandleSE" type="AnimatedSprite2D" parent="Candles"]
+position = Vector2(11, 4)
+sprite_frames = ExtResource("2_candles")
+animation = &"default"
+offset = Vector2(0, -8)
+
+[node name="Glow" type="PointLight2D" parent="."]
+position = Vector2(0, -10)
+energy = 0.8
+texture = ExtResource("3_light")
+texture_scale = 0.9

@@ -1,0 +1,160 @@
+{
+  "name": "spider",
+  "frame_size": [
+    48,
+    48
+  ],
+  "origin": [
+    24,
+    46
+  ],
+  "godot_offset": [
+    0,
+    -22
+  ],
+  "notes": "A giant cave spider: dark bulbous abdomen with pale chevrons, eight red eyes, pale fangs, long high-kneed legs; bites. Special: web (spits fx web_shot, which leaves fx web on the floor as a trap).",
+  "sheets": {
+    "normal": "res://assets/sprites/enemies/char_spider_normal.png"
+  },
+  "sprite_frames": {
+    "normal": "res://assets/sprites/enemies/char_spider_normal.tres"
+  },
+  "animations": {
+    "idle": {
+      "fps": 5,
+      "loop": true,
+      "directions": {
+        "down": {
+          "row": 0,
+          "frames": 4
+        },
+        "up": {
+          "row": 1,
+          "frames": 4
+        },
+        "left": {
+          "row": 2,
+          "frames": 4
+        },
+        "right": {
+          "row": 3,
+          "frames": 4
+        }
+      }
+    },
+    "walk": {
+      "fps": 10,
+      "loop": true,
+      "directions": {
+        "down": {
+          "row": 4,
+          "frames": 8
+        },
+        "up": {
+          "row": 5,
+          "frames": 8
+        },
+        "left": {
+          "row": 6,
+          "frames": 8
+        },
+        "right": {
+          "row": 7,
+          "frames": 8
+        }
+      }
+    },
+    "attack": {
+      "fps": 10,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 8,
+          "frames": 6
+        },
+        "up": {
+          "row": 9,
+          "frames": 6
+        },
+        "left": {
+          "row": 10,
+          "frames": 6
+        },
+        "right": {
+          "row": 11,
+          "frames": 6
+        }
+      }
+    },
+    "special": {
+      "fps": 10,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 12,
+          "frames": 7
+        },
+        "up": {
+          "row": 13,
+          "frames": 7
+        },
+        "left": {
+          "row": 14,
+          "frames": 7
+        },
+        "right": {
+          "row": 15,
+          "frames": 7
+        }
+      }
+    },
+    "death": {
+      "fps": 8,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 16,
+          "frames": 6
+        },
+        "up": {
+          "row": 17,
+          "frames": 6
+        },
+        "left": {
+          "row": 18,
+          "frames": 6
+        },
+        "right": {
+          "row": 19,
+          "frames": 6
+        }
+      }
+    }
+  },
+  "effects": {
+    "web_shot": {
+      "sheet": "res://assets/sprites/enemies/fx_spider_web_shot.png",
+      "sprite_frames": "res://assets/sprites/enemies/fx_spider_web_shot.tres",
+      "frame_size": [
+        12,
+        12
+      ],
+      "frames": 3,
+      "fps": 10,
+      "loop": true,
+      "notes": "The silk ball it spits, spinning in flight."
+    },
+    "web": {
+      "sheet": "res://assets/sprites/enemies/fx_spider_web.png",
+      "sprite_frames": "res://assets/sprites/enemies/fx_spider_web.tres",
+      "frame_size": [
+        32,
+        32
+      ],
+      "frames": 3,
+      "fps": 4,
+      "loop": true,
+      "notes": "The sticky floor web it leaves: a trap tile, 32x32, dew glinting."
+    }
+  }
+}

@@ -1,0 +1,315 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/hud.gd" id="1_hud"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/ui_inventory_panel.png" id="2_inventory_panel"]
+[ext_resource type="SpriteFrames" path="res://assets/sprites/ui/ui_inventory_highlight.tres" id="3_highlight"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/ui_panel_frame.png" id="4_frame"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/ui_healthbar_under.png" id="5_bar_under"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/ui_healthbar_damage.png" id="6_bar_damage"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/ui_healthbar_progress.png" id="7_bar_progress"]
+[ext_resource type="Texture2D" path="res://assets/sprites/ui/ui_healthbar_over.png" id="8_bar_over"]
+[ext_resource type="SpriteFrames" path="res://assets/sprites/ui/ui_healthbar_flash.tres" id="9_bar_flash"]
+[ext_resource type="SpriteFrames" path="res://assets/sprites/ui/ui_cursor_bob.tres" id="10_cursor"]
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("1_hud")
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="HealthPanel" type="NinePatchRect" parent="Root"]
+layout_mode = 0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 244.0
+offset_bottom = 46.0
+texture = ExtResource("4_frame")
+patch_margin_left = 8
+patch_margin_top = 8
+patch_margin_right = 8
+patch_margin_bottom = 8
+
+[node name="HPTag" type="Label" parent="Root/HealthPanel"]
+layout_mode = 0
+offset_left = 9.0
+offset_top = 6.0
+offset_right = 25.0
+offset_bottom = 18.0
+text = "HP"
+
+[node name="DamageBar" type="TextureProgressBar" parent="Root/HealthPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 26.0
+offset_top = 6.0
+offset_right = 130.0
+offset_bottom = 18.0
+mouse_filter = 2
+value = 100.0
+texture_under = ExtResource("5_bar_under")
+texture_progress = ExtResource("6_bar_damage")
+texture_progress_offset = Vector2(4, 3)
+
+[node name="HealthBar" type="TextureProgressBar" parent="Root/HealthPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 26.0
+offset_top = 6.0
+offset_right = 130.0
+offset_bottom = 18.0
+mouse_filter = 2
+value = 100.0
+texture_over = ExtResource("8_bar_over")
+texture_progress = ExtResource("7_bar_progress")
+texture_progress_offset = Vector2(4, 3)
+
+[node name="HealthFlash" type="AnimatedSprite2D" parent="Root/HealthPanel/HealthBar"]
+unique_name_in_owner = true
+visible = false
+sprite_frames = ExtResource("9_bar_flash")
+centered = false
+
+[node name="HealthLabel" type="Label" parent="Root/HealthPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 136.0
+offset_top = 6.0
+offset_right = 228.0
+offset_bottom = 18.0
+text = "100/100"
+
+[node name="StatsLabel" type="Label" parent="Root/HealthPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 9.0
+offset_top = 20.0
+offset_right = 228.0
+offset_bottom = 32.0
+theme_override_colors/font_color = Color(0.98, 0.82, 0.3, 1)
+text = "ATK 6  DEF 0  Pack 0/24"
+
+[node name="StatusPanel" type="PanelContainer" parent="Root"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -120.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = 40.0
+grow_horizontal = 0
+
+[node name="StatusList" type="VBoxContainer" parent="Root/StatusPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="StatusTitle" type="Label" parent="Root/StatusPanel/StatusList"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.64, 0.69, 1)
+text = "STATUS"
+
+[node name="TurnPanel" type="PanelContainer" parent="Root"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -80.0
+offset_top = -36.0
+offset_right = 80.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="TurnLabel" type="Label" parent="Root/TurnPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Turn 1 - Your turn"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CombatLog" type="Label" parent="Root"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = -118.0
+offset_right = 330.0
+offset_bottom = -42.0
+grow_vertical = 0
+vertical_alignment = 2
+
+[node name="ControlsHint" type="Label" parent="Root"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -300.0
+offset_top = -46.0
+offset_right = -10.0
+offset_bottom = -8.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_colors/font_color = Color(0.65, 0.64, 0.69, 1)
+text = "Move: WASD / arrows   Diagonal: Q E Z C
+Space attack   Shift defend   F pick up
+I inventory   Esc menu"
+horizontal_alignment = 2
+vertical_alignment = 2
+
+[node name="InventoryPanel" type="TextureRect" parent="Root"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -73.0
+offset_top = -90.0
+offset_right = 73.0
+offset_bottom = 28.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_inventory_panel")
+
+[node name="Title" type="Label" parent="Root/InventoryPanel"]
+layout_mode = 0
+offset_left = 4.0
+offset_top = 5.0
+offset_right = 142.0
+offset_bottom = 17.0
+theme_override_colors/font_color = Color(0.98, 0.82, 0.3, 1)
+text = "INVENTORY"
+horizontal_alignment = 1
+
+[node name="Slots" type="Control" parent="Root/InventoryPanel"]
+unique_name_in_owner = true
+anchors_preset = 0
+mouse_filter = 2
+
+[node name="Highlight" type="AnimatedSprite2D" parent="Root/InventoryPanel"]
+unique_name_in_owner = true
+sprite_frames = ExtResource("3_highlight")
+centered = false
+
+[node name="Details" type="Label" parent="Root/InventoryPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = -80.0
+offset_top = 124.0
+offset_right = 226.0
+offset_bottom = 152.0
+horizontal_alignment = 1
+
+[node name="PauseMenu" type="Control" parent="Root"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="Root/PauseMenu"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.55)
+
+[node name="Panel" type="NinePatchRect" parent="Root/PauseMenu"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -64.0
+offset_top = -80.0
+offset_right = 64.0
+offset_bottom = 80.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("4_frame")
+patch_margin_left = 8
+patch_margin_top = 8
+patch_margin_right = 8
+patch_margin_bottom = 8
+
+[node name="Content" type="VBoxContainer" parent="Root/PauseMenu/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 8.0
+offset_right = -16.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="Root/PauseMenu/Panel/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.98, 0.82, 0.3, 1)
+text = "PAUSED"
+horizontal_alignment = 1
+
+[node name="Buttons" type="VBoxContainer" parent="Root/PauseMenu/Panel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="Message" type="Label" parent="Root/PauseMenu/Panel/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+horizontal_alignment = 1
+
+[node name="Cursor" type="AnimatedSprite2D" parent="Root/PauseMenu"]
+unique_name_in_owner = true
+sprite_frames = ExtResource("10_cursor")
+centered = false
+
+[node name="GameOverLabel" type="Label" parent="Root"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -40.0
+offset_right = 300.0
+offset_bottom = 40.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(0.89, 0.47, 0.46, 1)
+theme_override_font_sizes/font_size = 32
+text = "You have fallen.
+Press F to try again."
+horizontal_alignment = 1
+vertical_alignment = 1

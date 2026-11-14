@@ -1,0 +1,135 @@
+{
+  "name": "mimic",
+  "frame_size": [
+    32,
+    48
+  ],
+  "origin": [
+    16,
+    46
+  ],
+  "godot_offset": [
+    0,
+    -22
+  ],
+  "notes": "Disguised as treasure: the game's chest, until its lid opens on fangs, a tongue and glowing eyes. Walks by hopping. Attack is a wide chomp. Special: reveal (the lid creaks, eyes open in the gap, then the mouth gapes).",
+  "sheets": {
+    "normal": "res://assets/sprites/enemies/char_mimic_normal.png"
+  },
+  "sprite_frames": {
+    "normal": "res://assets/sprites/enemies/char_mimic_normal.tres"
+  },
+  "animations": {
+    "idle": {
+      "fps": 6,
+      "loop": true,
+      "directions": {
+        "down": {
+          "row": 0,
+          "frames": 4
+        },
+        "up": {
+          "row": 1,
+          "frames": 4
+        },
+        "left": {
+          "row": 2,
+          "frames": 4
+        },
+        "right": {
+          "row": 3,
+          "frames": 4
+        }
+      }
+    },
+    "walk": {
+      "fps": 10,
+      "loop": true,
+      "directions": {
+        "down": {
+          "row": 4,
+          "frames": 8
+        },
+        "up": {
+          "row": 5,
+          "frames": 8
+        },
+        "left": {
+          "row": 6,
+          "frames": 8
+        },
+        "right": {
+          "row": 7,
+          "frames": 8
+        }
+      }
+    },
+    "attack": {
+      "fps": 10,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 8,
+          "frames": 6
+        },
+        "up": {
+          "row": 9,
+          "frames": 6
+        },
+        "left": {
+          "row": 10,
+          "frames": 6
+        },
+        "right": {
+          "row": 11,
+          "frames": 6
+        }
+      }
+    },
+    "special": {
+      "fps": 8,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 12,
+          "frames": 10
+        },
+        "up": {
+          "row": 13,
+          "frames": 10
+        },
+        "left": {
+          "row": 14,
+          "frames": 10
+        },
+        "right": {
+          "row": 15,
+          "frames": 10
+        }
+      }
+    },
+    "death": {
+      "fps": 8,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 16,
+          "frames": 6
+        },
+        "up": {
+          "row": 17,
+          "frames": 6
+        },
+        "left": {
+          "row": 18,
+          "frames": 6
+        },
+        "right": {
+          "row": 19,
+          "frames": 6
+        }
+      }
+    }
+  },
+  "effects": {}
+}

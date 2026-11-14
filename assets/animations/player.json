@@ -1,0 +1,183 @@
+{
+  "name": "player",
+  "frame_size": [
+    32,
+    48
+  ],
+  "origin": [
+    16,
+    46
+  ],
+  "godot_offset": [
+    0,
+    -22
+  ],
+  "notes": "The adventurer: steel sword, round shield, red scarf. States recolour the normal sheet: injured, frozen, poisoned.",
+  "sheets": {
+    "normal": "res://assets/sprites/player/char_player_normal.png",
+    "injured": "res://assets/sprites/player/char_player_injured.png",
+    "frozen": "res://assets/sprites/player/char_player_frozen.png",
+    "poisoned": "res://assets/sprites/player/char_player_poisoned.png"
+  },
+  "sprite_frames": {
+    "normal": "res://assets/sprites/player/char_player_normal.tres",
+    "injured": "res://assets/sprites/player/char_player_injured.tres",
+    "frozen": "res://assets/sprites/player/char_player_frozen.tres",
+    "poisoned": "res://assets/sprites/player/char_player_poisoned.tres"
+  },
+  "animations": {
+    "idle": {
+      "fps": 5,
+      "loop": true,
+      "directions": {
+        "down": {
+          "row": 0,
+          "frames": 4
+        },
+        "down_right": {
+          "row": 1,
+          "frames": 4
+        },
+        "right": {
+          "row": 2,
+          "frames": 4
+        },
+        "up_right": {
+          "row": 3,
+          "frames": 4
+        },
+        "up": {
+          "row": 4,
+          "frames": 4
+        },
+        "up_left": {
+          "row": 5,
+          "frames": 4
+        },
+        "left": {
+          "row": 6,
+          "frames": 4
+        },
+        "down_left": {
+          "row": 7,
+          "frames": 4
+        }
+      }
+    },
+    "walk": {
+      "fps": 10,
+      "loop": true,
+      "directions": {
+        "down": {
+          "row": 8,
+          "frames": 8
+        },
+        "down_right": {
+          "row": 9,
+          "frames": 8
+        },
+        "right": {
+          "row": 10,
+          "frames": 8
+        },
+        "up_right": {
+          "row": 11,
+          "frames": 8
+        },
+        "up": {
+          "row": 12,
+          "frames": 8
+        },
+        "up_left": {
+          "row": 13,
+          "frames": 8
+        },
+        "left": {
+          "row": 14,
+          "frames": 8
+        },
+        "down_left": {
+          "row": 15,
+          "frames": 8
+        }
+      }
+    },
+    "attack": {
+      "fps": 10,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 16,
+          "frames": 6
+        },
+        "down_right": {
+          "row": 17,
+          "frames": 6
+        },
+        "right": {
+          "row": 18,
+          "frames": 6
+        },
+        "up_right": {
+          "row": 19,
+          "frames": 6
+        },
+        "up": {
+          "row": 20,
+          "frames": 6
+        },
+        "up_left": {
+          "row": 21,
+          "frames": 6
+        },
+        "left": {
+          "row": 22,
+          "frames": 6
+        },
+        "down_left": {
+          "row": 23,
+          "frames": 6
+        }
+      }
+    },
+    "defend": {
+      "fps": 6,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 24,
+          "frames": 2
+        },
+        "down_right": {
+          "row": 25,
+          "frames": 2
+        },
+        "right": {
+          "row": 26,
+          "frames": 2
+        },
+        "up_right": {
+          "row": 27,
+          "frames": 2
+        },
+        "up": {
+          "row": 28,
+          "frames": 2
+        },
+        "up_left": {
+          "row": 29,
+          "frames": 2
+        },
+        "left": {
+          "row": 30,
+          "frames": 2
+        },
+        "down_left": {
+          "row": 31,
+          "frames": 2
+        }
+      }
+    }
+  },
+  "effects": {}
+}

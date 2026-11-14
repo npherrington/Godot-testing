@@ -1,0 +1,194 @@
+{
+  "name": "lich",
+  "frame_size": [
+    48,
+    48
+  ],
+  "origin": [
+    24,
+    46
+  ],
+  "godot_offset": [
+    0,
+    -22
+  ],
+  "notes": "The final boss: a floating skeletal sorcerer-king in tattered purple robes, jagged gold crown, cold blue eye-lights, a soul-gem in its open ribcage and a horned staff. Attack: death bolt (fx death_bolt). Attack 2: staff-slam nova (fx nova). Special: raise dead (lifts the staff, a summoning circle burns into the floor and bony hands claw up; fx summon_circle).",
+  "sheets": {
+    "normal": "res://assets/sprites/enemies/char_lich_normal.png"
+  },
+  "sprite_frames": {
+    "normal": "res://assets/sprites/enemies/char_lich_normal.tres"
+  },
+  "animations": {
+    "idle": {
+      "fps": 6,
+      "loop": true,
+      "directions": {
+        "down": {
+          "row": 0,
+          "frames": 4
+        },
+        "up": {
+          "row": 1,
+          "frames": 4
+        },
+        "left": {
+          "row": 2,
+          "frames": 4
+        },
+        "right": {
+          "row": 3,
+          "frames": 4
+        }
+      }
+    },
+    "walk": {
+      "fps": 8,
+      "loop": true,
+      "directions": {
+        "down": {
+          "row": 4,
+          "frames": 8
+        },
+        "up": {
+          "row": 5,
+          "frames": 8
+        },
+        "left": {
+          "row": 6,
+          "frames": 8
+        },
+        "right": {
+          "row": 7,
+          "frames": 8
+        }
+      }
+    },
+    "attack": {
+      "fps": 10,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 8,
+          "frames": 7
+        },
+        "up": {
+          "row": 9,
+          "frames": 7
+        },
+        "left": {
+          "row": 10,
+          "frames": 7
+        },
+        "right": {
+          "row": 11,
+          "frames": 7
+        }
+      }
+    },
+    "attack2": {
+      "fps": 10,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 12,
+          "frames": 8
+        },
+        "up": {
+          "row": 13,
+          "frames": 8
+        },
+        "left": {
+          "row": 14,
+          "frames": 8
+        },
+        "right": {
+          "row": 15,
+          "frames": 8
+        }
+      }
+    },
+    "special": {
+      "fps": 8,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 16,
+          "frames": 10
+        },
+        "up": {
+          "row": 17,
+          "frames": 10
+        },
+        "left": {
+          "row": 18,
+          "frames": 10
+        },
+        "right": {
+          "row": 19,
+          "frames": 10
+        }
+      }
+    },
+    "death": {
+      "fps": 8,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 20,
+          "frames": 6
+        },
+        "up": {
+          "row": 21,
+          "frames": 6
+        },
+        "left": {
+          "row": 22,
+          "frames": 6
+        },
+        "right": {
+          "row": 23,
+          "frames": 6
+        }
+      }
+    }
+  },
+  "effects": {
+    "death_bolt": {
+      "sheet": "res://assets/sprites/enemies/fx_lich_death_bolt.png",
+      "sprite_frames": "res://assets/sprites/enemies/fx_lich_death_bolt.tres",
+      "frame_size": [
+        24,
+        12
+      ],
+      "frames": 6,
+      "fps": 10,
+      "loop": true,
+      "notes": "24x12 bolt flying right (rotate to aim): a skull of cold light in a purple aura with a tail of dark flame."
+    },
+    "nova": {
+      "sheet": "res://assets/sprites/enemies/fx_lich_nova.png",
+      "sprite_frames": "res://assets/sprites/enemies/fx_lich_nova.tres",
+      "frame_size": [
+        64,
+        40
+      ],
+      "frames": 6,
+      "fps": 10,
+      "loop": false,
+      "notes": "64x40, centre on the lich's shadow: a ring of dark energy rolling out across the floor with spikes bursting up from it, then fading."
+    },
+    "summon_circle": {
+      "sheet": "res://assets/sprites/enemies/fx_lich_summon_circle.png",
+      "sprite_frames": "res://assets/sprites/enemies/fx_lich_summon_circle.tres",
+      "frame_size": [
+        48,
+        24
+      ],
+      "frames": 8,
+      "fps": 8,
+      "loop": false,
+      "notes": "48x24, flat on the floor under the summons: burns in round its rim (frames 0-3), then turns and pulses (4-7; loop those while it holds)."
+    }
+  }
+}

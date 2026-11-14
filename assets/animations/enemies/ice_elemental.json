@@ -1,0 +1,160 @@
+{
+  "name": "ice_elemental",
+  "frame_size": [
+    48,
+    48
+  ],
+  "origin": [
+    24,
+    46
+  ],
+  "godot_offset": [
+    0,
+    -22
+  ],
+  "notes": "A floating figure of jagged ice round a glowing core, shards orbiting it, hovering over its shadow. attack: hurls an ice shard (fx ice_shard). Special: frost nova (draws its shards in, then a ring of frost bursts out across the floor and freezes; fx frost_nova).",
+  "sheets": {
+    "normal": "res://assets/sprites/enemies/char_ice_elemental_normal.png"
+  },
+  "sprite_frames": {
+    "normal": "res://assets/sprites/enemies/char_ice_elemental_normal.tres"
+  },
+  "animations": {
+    "idle": {
+      "fps": 6,
+      "loop": true,
+      "directions": {
+        "down": {
+          "row": 0,
+          "frames": 4
+        },
+        "up": {
+          "row": 1,
+          "frames": 4
+        },
+        "left": {
+          "row": 2,
+          "frames": 4
+        },
+        "right": {
+          "row": 3,
+          "frames": 4
+        }
+      }
+    },
+    "walk": {
+      "fps": 9,
+      "loop": true,
+      "directions": {
+        "down": {
+          "row": 4,
+          "frames": 8
+        },
+        "up": {
+          "row": 5,
+          "frames": 8
+        },
+        "left": {
+          "row": 6,
+          "frames": 8
+        },
+        "right": {
+          "row": 7,
+          "frames": 8
+        }
+      }
+    },
+    "attack": {
+      "fps": 10,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 8,
+          "frames": 6
+        },
+        "up": {
+          "row": 9,
+          "frames": 6
+        },
+        "left": {
+          "row": 10,
+          "frames": 6
+        },
+        "right": {
+          "row": 11,
+          "frames": 6
+        }
+      }
+    },
+    "special": {
+      "fps": 10,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 12,
+          "frames": 9
+        },
+        "up": {
+          "row": 13,
+          "frames": 9
+        },
+        "left": {
+          "row": 14,
+          "frames": 9
+        },
+        "right": {
+          "row": 15,
+          "frames": 9
+        }
+      }
+    },
+    "death": {
+      "fps": 8,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 16,
+          "frames": 6
+        },
+        "up": {
+          "row": 17,
+          "frames": 6
+        },
+        "left": {
+          "row": 18,
+          "frames": 6
+        },
+        "right": {
+          "row": 19,
+          "frames": 6
+        }
+      }
+    }
+  },
+  "effects": {
+    "ice_shard": {
+      "sheet": "res://assets/sprites/enemies/fx_ice_elemental_ice_shard.png",
+      "sprite_frames": "res://assets/sprites/enemies/fx_ice_elemental_ice_shard.tres",
+      "frame_size": [
+        16,
+        10
+      ],
+      "frames": 4,
+      "fps": 10,
+      "loop": true,
+      "notes": "Projectile flying right; rotate to the throw direction."
+    },
+    "frost_nova": {
+      "sheet": "res://assets/sprites/enemies/fx_ice_elemental_frost_nova.png",
+      "sprite_frames": "res://assets/sprites/enemies/fx_ice_elemental_frost_nova.tres",
+      "frame_size": [
+        80,
+        48
+      ],
+      "frames": 6,
+      "fps": 10,
+      "loop": false,
+      "notes": "Ring of frost spreading over the floor; centre on the elemental's shadow."
+    }
+  }
+}

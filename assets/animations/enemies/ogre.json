@@ -1,0 +1,148 @@
+{
+  "name": "ogre",
+  "frame_size": [
+    48,
+    48
+  ],
+  "origin": [
+    24,
+    46
+  ],
+  "godot_offset": [
+    0,
+    -22
+  ],
+  "notes": "A huge hunched ogre: tan hide, pot belly, tiny tusked head, pelt loincloth, a studded club on its shoulder; overhead smash. Special: slam (drives the club into the floor and sends out fx shockwave, a ring of dust).",
+  "sheets": {
+    "normal": "res://assets/sprites/enemies/char_ogre_normal.png"
+  },
+  "sprite_frames": {
+    "normal": "res://assets/sprites/enemies/char_ogre_normal.tres"
+  },
+  "animations": {
+    "idle": {
+      "fps": 4,
+      "loop": true,
+      "directions": {
+        "down": {
+          "row": 0,
+          "frames": 4
+        },
+        "up": {
+          "row": 1,
+          "frames": 4
+        },
+        "left": {
+          "row": 2,
+          "frames": 4
+        },
+        "right": {
+          "row": 3,
+          "frames": 4
+        }
+      }
+    },
+    "walk": {
+      "fps": 8,
+      "loop": true,
+      "directions": {
+        "down": {
+          "row": 4,
+          "frames": 8
+        },
+        "up": {
+          "row": 5,
+          "frames": 8
+        },
+        "left": {
+          "row": 6,
+          "frames": 8
+        },
+        "right": {
+          "row": 7,
+          "frames": 8
+        }
+      }
+    },
+    "attack": {
+      "fps": 10,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 8,
+          "frames": 7
+        },
+        "up": {
+          "row": 9,
+          "frames": 7
+        },
+        "left": {
+          "row": 10,
+          "frames": 7
+        },
+        "right": {
+          "row": 11,
+          "frames": 7
+        }
+      }
+    },
+    "special": {
+      "fps": 10,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 12,
+          "frames": 9
+        },
+        "up": {
+          "row": 13,
+          "frames": 9
+        },
+        "left": {
+          "row": 14,
+          "frames": 9
+        },
+        "right": {
+          "row": 15,
+          "frames": 9
+        }
+      }
+    },
+    "death": {
+      "fps": 8,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 16,
+          "frames": 6
+        },
+        "up": {
+          "row": 17,
+          "frames": 6
+        },
+        "left": {
+          "row": 18,
+          "frames": 6
+        },
+        "right": {
+          "row": 19,
+          "frames": 6
+        }
+      }
+    }
+  },
+  "effects": {
+    "shockwave": {
+      "sheet": "res://assets/sprites/enemies/fx_ogre_shockwave.png",
+      "sprite_frames": "res://assets/sprites/enemies/fx_ogre_shockwave.tres",
+      "frame_size": [
+        64,
+        32
+      ],
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "notes": "The slam's expanding ring of dust, centred on the ogre's feet."
+    }
+  }
+}

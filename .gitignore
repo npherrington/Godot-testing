@@ -10,3 +10,7 @@ tools/.venv/
 runs/*
 !runs/.gdignore
 .DS_Store
+
+# art previews and audio intermediates (art/build.py, art/audio/build_audio.py)
+art/out/
+__pycache__/

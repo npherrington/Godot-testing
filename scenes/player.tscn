@@ -1,17 +1,37 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
+[ext_resource type="Texture2D" path="res://assets/sprites/environment/light_torch.png" id="2_light"]
+[ext_resource type="Script" path="res://scripts/torch_light.gd" id="3_flicker"]
+[ext_resource type="AudioStream" path="res://assets/sounds/sfx/sfx_environment_torch_loop.ogg" id="4_torch_sound"]
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_body"]
-radius = 16.0
-
-[node name="Player" type="CharacterBody2D" groups=["player"]]
-motion_mode = 1
+[node name="Player" type="Node2D" groups=["player"]]
 script = ExtResource("1_player")
 
-[node name="Body" type="Polygon2D" parent="."]
-color = Color(0.3, 0.75, 1, 1)
-polygon = PackedVector2Array(-16, -16, 16, -16, 16, 16, -16, 16)
+[node name="Sprite" type="AnimatedSprite2D" parent="."]
+offset = Vector2(0, -22)
 
-[node name="Collision" type="CollisionShape2D" parent="."]
-shape = SubResource("CircleShape2D_body")
+[node name="Fallback" type="Polygon2D" parent="."]
+visible = false
+color = Color(0.3, 0.75, 1, 1)
+polygon = PackedVector2Array(-12, -40, 12, -40, 12, 0, -12, 0)
+
+[node name="Camera" type="Camera2D" parent="."]
+limit_left = 0
+limit_top = 0
+limit_right = 1024
+limit_bottom = 1024
+position_smoothing_enabled = true
+position_smoothing_speed = 8.0
+
+[node name="Torch" type="PointLight2D" parent="."]
+position = Vector2(0, -16)
+color = Color(1, 0.82, 0.55, 1)
+energy = 1.1
+texture = ExtResource("2_light")
+texture_scale = 3.0
+script = ExtResource("3_flicker")
+
+[node name="TorchSound" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("4_torch_sound")
+volume_db = -14.0

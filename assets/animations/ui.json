@@ -1,0 +1,317 @@
+{
+  "fonts": {
+    "font_dungeon": {
+      "fnt": "res://assets/fonts/font_dungeon.fnt",
+      "page": "res://assets/fonts/font_dungeon_0.png",
+      "font_size_1x": 16,
+      "font_size_2x": 32,
+      "line_height": 11,
+      "base": 8,
+      "cap_height": 7,
+      "descender": 2,
+      "outline": false
+    },
+    "font_dungeon_outline": {
+      "fnt": "res://assets/fonts/font_dungeon_outline.fnt",
+      "page": "res://assets/fonts/font_dungeon_outline_0.png",
+      "font_size_1x": 16,
+      "font_size_2x": 32,
+      "line_height": 12,
+      "base": 8,
+      "cap_height": 7,
+      "descender": 2,
+      "outline": true
+    }
+  },
+  "healthbar": {
+    "size": [
+      104,
+      12
+    ],
+    "textures": {
+      "under": "res://assets/sprites/ui/ui_healthbar_under.png",
+      "progress": "res://assets/sprites/ui/ui_healthbar_progress.png",
+      "damage": "res://assets/sprites/ui/ui_healthbar_damage.png",
+      "over": "res://assets/sprites/ui/ui_healthbar_over.png"
+    },
+    "texture_progress_offset": [
+      4,
+      3
+    ],
+    "fill_rect": [
+      4,
+      3,
+      96,
+      6
+    ],
+    "flash": {
+      "sheet": "res://assets/sprites/ui/ui_healthbar_flash.png",
+      "sprite_frames": "res://assets/sprites/ui/ui_healthbar_flash.tres",
+      "frame_size": [
+        104,
+        12
+      ],
+      "frames": 6,
+      "fps": 12,
+      "loop": false,
+      "notes": "AnimatedSprite2D over the bar at (0, 0), centered off; play on a hit, hide when finished"
+    }
+  },
+  "status_icons": {
+    "size": [
+      12,
+      12
+    ],
+    "icons": {
+      "poison": "res://assets/sprites/ui/ui_status_poison.png",
+      "freeze": "res://assets/sprites/ui/ui_status_freeze.png",
+      "burn": "res://assets/sprites/ui/ui_status_burn.png",
+      "petrified": "res://assets/sprites/ui/ui_status_petrified.png"
+    }
+  },
+  "cursor": {
+    "texture": "res://assets/sprites/ui/ui_cursor_arrow.png",
+    "size": [
+      9,
+      9
+    ],
+    "hotspot": [
+      8,
+      4
+    ],
+    "bob": {
+      "sheet": "res://assets/sprites/ui/ui_cursor_bob.png",
+      "sprite_frames": "res://assets/sprites/ui/ui_cursor_bob.tres",
+      "frame_size": [
+        11,
+        9
+      ],
+      "frames": 6,
+      "fps": 12,
+      "loop": true,
+      "notes": "the arrow's tip is at (8, 4) in frame 0; frames nudge it 0-2 px right"
+    }
+  },
+  "panel_frame": {
+    "texture": "res://assets/sprites/ui/ui_panel_frame.png",
+    "size": [
+      24,
+      24
+    ],
+    "patch_margins": {
+      "left": 8,
+      "top": 8,
+      "right": 8,
+      "bottom": 8
+    },
+    "content_margins": {
+      "left": 8,
+      "top": 8,
+      "right": 8,
+      "bottom": 8
+    }
+  },
+  "menu_background": {
+    "texture": "res://assets/sprites/ui/ui_menu_background.png",
+    "size": [
+      64,
+      64
+    ],
+    "tiles": true
+  },
+  "inventory": {
+    "panel": "res://assets/sprites/ui/ui_inventory_panel.png",
+    "panel_size": [
+      146,
+      118
+    ],
+    "grid": [
+      6,
+      4
+    ],
+    "slot_size": [
+      20,
+      20
+    ],
+    "slot_pitch": [
+      22,
+      22
+    ],
+    "item_offset": [
+      2,
+      2
+    ],
+    "item_area": [
+      16,
+      16
+    ],
+    "title_rect": [
+      4,
+      4,
+      138,
+      14
+    ],
+    "slots": [
+      [
+        8,
+        24
+      ],
+      [
+        30,
+        24
+      ],
+      [
+        52,
+        24
+      ],
+      [
+        74,
+        24
+      ],
+      [
+        96,
+        24
+      ],
+      [
+        118,
+        24
+      ],
+      [
+        8,
+        46
+      ],
+      [
+        30,
+        46
+      ],
+      [
+        52,
+        46
+      ],
+      [
+        74,
+        46
+      ],
+      [
+        96,
+        46
+      ],
+      [
+        118,
+        46
+      ],
+      [
+        8,
+        68
+      ],
+      [
+        30,
+        68
+      ],
+      [
+        52,
+        68
+      ],
+      [
+        74,
+        68
+      ],
+      [
+        96,
+        68
+      ],
+      [
+        118,
+        68
+      ],
+      [
+        8,
+        90
+      ],
+      [
+        30,
+        90
+      ],
+      [
+        52,
+        90
+      ],
+      [
+        74,
+        90
+      ],
+      [
+        96,
+        90
+      ],
+      [
+        118,
+        90
+      ]
+    ],
+    "slot_textures": {
+      "normal": "res://assets/sprites/ui/ui_inventory_slot_normal.png",
+      "hover": "res://assets/sprites/ui/ui_inventory_slot_hover.png",
+      "selected": "res://assets/sprites/ui/ui_inventory_slot_selected.png",
+      "disabled": "res://assets/sprites/ui/ui_inventory_slot_disabled.png"
+    },
+    "highlight": {
+      "sheet": "res://assets/sprites/ui/ui_inventory_highlight.png",
+      "sprite_frames": "res://assets/sprites/ui/ui_inventory_highlight.tres",
+      "frame_size": [
+        24,
+        24
+      ],
+      "frames": 12,
+      "fps": 12,
+      "loop": true,
+      "offset": [
+        -2,
+        -2
+      ],
+      "notes": "draw at the slot's position minus (2, 2)"
+    }
+  },
+  "buttons": {
+    "size": [
+      24,
+      20
+    ],
+    "textures": {
+      "normal": "res://assets/sprites/ui/ui_button_normal.png",
+      "hover": "res://assets/sprites/ui/ui_button_hover.png",
+      "pressed": "res://assets/sprites/ui/ui_button_pressed.png",
+      "disabled": "res://assets/sprites/ui/ui_button_disabled.png"
+    },
+    "patch_margins": {
+      "left": 4,
+      "top": 4,
+      "right": 4,
+      "bottom": 4
+    },
+    "content_margins": {
+      "left": 4,
+      "top": 3,
+      "right": 4,
+      "bottom": 3
+    },
+    "pressed_content_margins": {
+      "left": 4,
+      "top": 4,
+      "right": 4,
+      "bottom": 2
+    },
+    "icons": {
+      "attack": "res://assets/sprites/ui/ui_icon_attack.png",
+      "defend": "res://assets/sprites/ui/ui_icon_defend.png",
+      "item": "res://assets/sprites/ui/ui_icon_item.png",
+      "magic": "res://assets/sprites/ui/ui_icon_magic.png",
+      "wait": "res://assets/sprites/ui/ui_icon_wait.png",
+      "flee": "res://assets/sprites/ui/ui_icon_flee.png"
+    },
+    "icon_size": [
+      14,
+      14
+    ]
+  }
+}

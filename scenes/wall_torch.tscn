@@ -1,0 +1,31 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/wall_torch.gd" id="1_torch"]
+[ext_resource type="SpriteFrames" path="res://assets/sprites/environment/decor_torch_wall.tres" id="2_flame"]
+[ext_resource type="SpriteFrames" path="res://assets/sprites/environment/fx_smoke_loop.tres" id="3_smoke"]
+[ext_resource type="Texture2D" path="res://assets/sprites/environment/light_torch.png" id="4_light"]
+[ext_resource type="Script" path="res://scripts/torch_light.gd" id="5_flicker"]
+
+[node name="WallTorch" type="Node2D" groups=["torches"]]
+script = ExtResource("1_torch")
+
+[node name="Smoke" type="AnimatedSprite2D" parent="."]
+modulate = Color(1, 1, 1, 0.55)
+position = Vector2(0, -30)
+sprite_frames = ExtResource("3_smoke")
+animation = &"default"
+
+[node name="Flame" type="AnimatedSprite2D" parent="."]
+sprite_frames = ExtResource("2_flame")
+animation = &"default"
+centered = false
+offset = Vector2(-8, 0)
+
+[node name="Light" type="PointLight2D" parent="."]
+position = Vector2(0, 8)
+color = Color(1, 0.78, 0.5, 1)
+energy = 0.9
+texture = ExtResource("4_light")
+texture_scale = 1.5
+script = ExtResource("5_flicker")
+flicker = 0.18

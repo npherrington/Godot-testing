@@ -1,0 +1,148 @@
+{
+  "name": "vampire",
+  "frame_size": [
+    32,
+    48
+  ],
+  "origin": [
+    16,
+    46
+  ],
+  "godot_offset": [
+    0,
+    -22
+  ],
+  "notes": "Gaunt pale noble: slicked black hair, red eyes and fangs, a high-collared black cape lined in red; rakes with its claws. Special: life drain (throws the cape open like bat wings and pulls in streams of blood mist; fx drain).",
+  "sheets": {
+    "normal": "res://assets/sprites/enemies/char_vampire_normal.png"
+  },
+  "sprite_frames": {
+    "normal": "res://assets/sprites/enemies/char_vampire_normal.tres"
+  },
+  "animations": {
+    "idle": {
+      "fps": 5,
+      "loop": true,
+      "directions": {
+        "down": {
+          "row": 0,
+          "frames": 4
+        },
+        "up": {
+          "row": 1,
+          "frames": 4
+        },
+        "left": {
+          "row": 2,
+          "frames": 4
+        },
+        "right": {
+          "row": 3,
+          "frames": 4
+        }
+      }
+    },
+    "walk": {
+      "fps": 8,
+      "loop": true,
+      "directions": {
+        "down": {
+          "row": 4,
+          "frames": 8
+        },
+        "up": {
+          "row": 5,
+          "frames": 8
+        },
+        "left": {
+          "row": 6,
+          "frames": 8
+        },
+        "right": {
+          "row": 7,
+          "frames": 8
+        }
+      }
+    },
+    "attack": {
+      "fps": 10,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 8,
+          "frames": 6
+        },
+        "up": {
+          "row": 9,
+          "frames": 6
+        },
+        "left": {
+          "row": 10,
+          "frames": 6
+        },
+        "right": {
+          "row": 11,
+          "frames": 6
+        }
+      }
+    },
+    "special": {
+      "fps": 8,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 12,
+          "frames": 8
+        },
+        "up": {
+          "row": 13,
+          "frames": 8
+        },
+        "left": {
+          "row": 14,
+          "frames": 8
+        },
+        "right": {
+          "row": 15,
+          "frames": 8
+        }
+      }
+    },
+    "death": {
+      "fps": 8,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 16,
+          "frames": 6
+        },
+        "up": {
+          "row": 17,
+          "frames": 6
+        },
+        "left": {
+          "row": 18,
+          "frames": 6
+        },
+        "right": {
+          "row": 19,
+          "frames": 6
+        }
+      }
+    }
+  },
+  "effects": {
+    "drain": {
+      "sheet": "res://assets/sprites/enemies/fx_vampire_drain.png",
+      "sprite_frames": "res://assets/sprites/enemies/fx_vampire_drain.tres",
+      "frame_size": [
+        48,
+        14
+      ],
+      "frames": 6,
+      "fps": 10,
+      "loop": true,
+      "notes": "48x14 loop: blood mist flowing from the right edge (the victim) to the left (the vampire); stretch or chain it along the line between them."
+    }
+  }
+}

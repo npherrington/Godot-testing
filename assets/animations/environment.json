@@ -1,0 +1,417 @@
+{
+  "about": "Environment sprites and tiles: see art/environment/NOTES.md",
+  "traps": {
+    "trap_pressure_plate_up": {
+      "png": "res://assets/sprites/environment/trap_pressure_plate_up.png",
+      "size": [16, 16],
+      "origin": [8, 16],
+      "notes": "also in the tile atlas"
+    },
+    "trap_pressure_plate_down": {
+      "png": "res://assets/sprites/environment/trap_pressure_plate_down.png",
+      "size": [16, 16],
+      "origin": [8, 16],
+      "notes": "also in the tile atlas"
+    },
+    "trap_spike_wall_retracted": {
+      "png": "res://assets/sprites/environment/trap_spike_wall_retracted.png",
+      "size": [16, 16],
+      "origin": [8, 16],
+      "notes": "also in the tile atlas"
+    },
+    "trap_spike_wall_extending": {
+      "png": "res://assets/sprites/environment/trap_spike_wall_extending.png",
+      "size": [16, 16],
+      "origin": [8, 16],
+      "notes": "also in the tile atlas"
+    },
+    "trap_spike_wall_extended": {
+      "png": "res://assets/sprites/environment/trap_spike_wall_extended.png",
+      "size": [16, 16],
+      "origin": [8, 16],
+      "notes": "also in the tile atlas"
+    },
+    "trap_arrow_idle": {
+      "png": "res://assets/sprites/environment/trap_arrow_idle.png",
+      "size": [16, 16],
+      "origin": [8, 16],
+      "notes": "also in the tile atlas"
+    },
+    "trap_spike_wall_extend": {
+      "sheet": "res://assets/sprites/environment/trap_spike_wall_extend.png",
+      "sprite_frames": "res://assets/sprites/environment/trap_spike_wall_extend.tres",
+      "frame_size": [16, 16],
+      "frames": 4,
+      "fps": 6,
+      "loop": false,
+      "origin": [8, 16],
+      "notes": "retracted, extending, extended, extended; play once, then hold or swap the tile"
+    },
+    "trap_spike_wall_retract": {
+      "sheet": "res://assets/sprites/environment/trap_spike_wall_retract.png",
+      "sprite_frames": "res://assets/sprites/environment/trap_spike_wall_retract.tres",
+      "frame_size": [16, 16],
+      "frames": 4,
+      "fps": 6,
+      "loop": false,
+      "origin": [8, 16],
+      "notes": "extend played backwards"
+    },
+    "trap_arrow_firing": {
+      "sheet": "res://assets/sprites/environment/trap_arrow_firing.png",
+      "sprite_frames": "res://assets/sprites/environment/trap_arrow_firing.tres",
+      "frame_size": [16, 16],
+      "frames": 4,
+      "fps": 6,
+      "loop": false,
+      "origin": [8, 16],
+      "notes": "idle, arrowhead out, loosed with dust, dust settles; frame 2 is the atlas tile"
+    },
+    "trap_arrow_projectile": {
+      "png": "res://assets/sprites/environment/trap_arrow_projectile.png",
+      "size": [16, 16],
+      "origin": [8, 8],
+      "notes": "points right; rotate the node to aim it"
+    }
+  },
+  "tiles": {
+    "atlas": "res://assets/tilesets/tileset_dungeon.png",
+    "tileset": "res://assets/tilesets/tileset_dungeon.tres",
+    "json": "res://assets/tilesets/tileset_dungeon.json",
+    "animated_strips": {
+      "tile_floor_water_a": {
+        "sheet": "res://assets/tilesets/tile_floor_water_a.png",
+        "sprite_frames": "res://assets/tilesets/tile_floor_water_a.tres",
+        "frame_size": [16, 16],
+        "frames": 4,
+        "fps": 4,
+        "loop": true
+      },
+      "tile_floor_lava_a": {
+        "sheet": "res://assets/tilesets/tile_floor_lava_a.png",
+        "sprite_frames": "res://assets/tilesets/tile_floor_lava_a.tres",
+        "frame_size": [16, 16],
+        "frames": 4,
+        "fps": 4,
+        "loop": true
+      },
+      "tile_door_magic_closed_top": {
+        "sheet": "res://assets/tilesets/tile_door_magic_closed_top.png",
+        "sprite_frames": "res://assets/tilesets/tile_door_magic_closed_top.tres",
+        "frame_size": [16, 16],
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      },
+      "tile_door_magic_closed_bottom": {
+        "sheet": "res://assets/tilesets/tile_door_magic_closed_bottom.png",
+        "sprite_frames": "res://assets/tilesets/tile_door_magic_closed_bottom.tres",
+        "frame_size": [16, 16],
+        "frames": 4,
+        "fps": 5,
+        "loop": true
+      }
+    }
+  },
+  "props": {
+    "decor_pillar_stone": {
+      "png": "res://assets/sprites/environment/decor_pillar_stone.png",
+      "size": [16, 32],
+      "origin": [8, 32],
+      "notes": "stands on its floor cell; blocks movement",
+      "mount": "floor"
+    },
+    "decor_pillar_broken": {
+      "png": "res://assets/sprites/environment/decor_pillar_broken.png",
+      "size": [16, 32],
+      "origin": [8, 32],
+      "mount": "floor"
+    },
+    "decor_statue_guardian": {
+      "png": "res://assets/sprites/environment/decor_statue_guardian.png",
+      "size": [16, 32],
+      "origin": [8, 32],
+      "mount": "floor"
+    },
+    "decor_rubble_a": {
+      "png": "res://assets/sprites/environment/decor_rubble_a.png",
+      "size": [16, 16],
+      "origin": [8, 16],
+      "mount": "floor"
+    },
+    "decor_rubble_b": {
+      "png": "res://assets/sprites/environment/decor_rubble_b.png",
+      "size": [16, 16],
+      "origin": [8, 16],
+      "mount": "floor"
+    },
+    "decor_bones_a": {
+      "png": "res://assets/sprites/environment/decor_bones_a.png",
+      "size": [16, 16],
+      "origin": [8, 16],
+      "notes": "flat on the floor",
+      "mount": "floor"
+    },
+    "decor_bones_b": {
+      "png": "res://assets/sprites/environment/decor_bones_b.png",
+      "size": [16, 16],
+      "origin": [8, 16],
+      "notes": "flat on the floor",
+      "mount": "floor"
+    },
+    "decor_skull_a": {
+      "png": "res://assets/sprites/environment/decor_skull_a.png",
+      "size": [16, 16],
+      "origin": [8, 16],
+      "mount": "floor"
+    },
+    "decor_skull_pile": {
+      "png": "res://assets/sprites/environment/decor_skull_pile.png",
+      "size": [32, 32],
+      "origin": [16, 32],
+      "mount": "floor"
+    },
+    "decor_barrel_a": {
+      "png": "res://assets/sprites/environment/decor_barrel_a.png",
+      "size": [16, 32],
+      "origin": [8, 32],
+      "mount": "floor"
+    },
+    "decor_crate_a": {
+      "png": "res://assets/sprites/environment/decor_crate_a.png",
+      "size": [16, 16],
+      "origin": [8, 16],
+      "mount": "floor"
+    },
+    "decor_table_wood": {
+      "png": "res://assets/sprites/environment/decor_table_wood.png",
+      "size": [32, 32],
+      "origin": [16, 32],
+      "mount": "floor"
+    },
+    "decor_chair_wood": {
+      "png": "res://assets/sprites/environment/decor_chair_wood.png",
+      "size": [16, 32],
+      "origin": [8, 32],
+      "mount": "floor"
+    },
+    "decor_bookshelf_a": {
+      "png": "res://assets/sprites/environment/decor_bookshelf_a.png",
+      "size": [32, 32],
+      "origin": [16, 32],
+      "notes": "against a wall face",
+      "mount": "floor"
+    },
+    "decor_bed_cot": {
+      "png": "res://assets/sprites/environment/decor_bed_cot.png",
+      "size": [16, 32],
+      "origin": [8, 32],
+      "notes": "head toward the wall",
+      "mount": "floor"
+    },
+    "decor_weapon_rack": {
+      "png": "res://assets/sprites/environment/decor_weapon_rack.png",
+      "size": [32, 32],
+      "origin": [16, 32],
+      "notes": "against a wall face",
+      "mount": "floor"
+    },
+    "decor_coffin_a": {
+      "png": "res://assets/sprites/environment/decor_coffin_a.png",
+      "size": [16, 32],
+      "origin": [8, 32],
+      "notes": "lying on the floor, head up",
+      "mount": "floor"
+    },
+    "decor_urn_a": {
+      "png": "res://assets/sprites/environment/decor_urn_a.png",
+      "size": [16, 16],
+      "origin": [8, 16],
+      "mount": "floor"
+    },
+    "decor_sack_a": {
+      "png": "res://assets/sprites/environment/decor_sack_a.png",
+      "size": [16, 16],
+      "origin": [8, 16],
+      "mount": "floor"
+    },
+    "decor_mushrooms_a": {
+      "png": "res://assets/sprites/environment/decor_mushrooms_a.png",
+      "size": [16, 16],
+      "origin": [8, 16],
+      "notes": "cave floors; give it a faint cyan light",
+      "mount": "floor"
+    },
+    "decor_banner_red": {
+      "png": "res://assets/sprites/environment/decor_banner_red.png",
+      "size": [16, 32],
+      "origin": [8, 0],
+      "notes": "hangs on a wall face from the canvas top",
+      "mount": "wall"
+    },
+    "decor_banner_purple": {
+      "png": "res://assets/sprites/environment/decor_banner_purple.png",
+      "size": [16, 32],
+      "origin": [8, 0],
+      "notes": "hangs on a wall face",
+      "mount": "wall"
+    },
+    "decor_chains_hanging": {
+      "png": "res://assets/sprites/environment/decor_chains_hanging.png",
+      "size": [16, 32],
+      "origin": [8, 0],
+      "notes": "hangs on a wall face",
+      "mount": "wall"
+    },
+    "decor_cobweb_left": {
+      "png": "res://assets/sprites/environment/decor_cobweb_left.png",
+      "size": [16, 16],
+      "origin": [8, 0],
+      "notes": "top-left corner of a room",
+      "mount": "wall"
+    },
+    "decor_cobweb_right": {
+      "png": "res://assets/sprites/environment/decor_cobweb_right.png",
+      "size": [16, 16],
+      "origin": [8, 0],
+      "notes": "top-right corner of a room",
+      "mount": "wall"
+    },
+    "decor_torch_wall": {
+      "sheet": "res://assets/sprites/environment/decor_torch_wall.png",
+      "sprite_frames": "res://assets/sprites/environment/decor_torch_wall.tres",
+      "frame_size": [16, 16],
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "origin": [8, 0],
+      "notes": "on a wall face; pair with a PointLight2D using light_torch.png",
+      "mount": "wall"
+    },
+    "decor_brazier_standing": {
+      "sheet": "res://assets/sprites/environment/decor_brazier_standing.png",
+      "sprite_frames": "res://assets/sprites/environment/decor_brazier_standing.tres",
+      "frame_size": [16, 32],
+      "frames": 4,
+      "fps": 6,
+      "loop": true,
+      "origin": [8, 32],
+      "notes": "stands on the floor; pair with a PointLight2D",
+      "mount": "floor"
+    },
+    "decor_candles_lit": {
+      "sheet": "res://assets/sprites/environment/decor_candles_lit.png",
+      "sprite_frames": "res://assets/sprites/environment/decor_candles_lit.tres",
+      "frame_size": [16, 16],
+      "frames": 4,
+      "fps": 5,
+      "loop": true,
+      "origin": [8, 16],
+      "notes": "on the floor or a table",
+      "mount": "floor"
+    },
+    "decor_altar_stone": {
+      "sheet": "res://assets/sprites/environment/decor_altar_stone.png",
+      "sprite_frames": "res://assets/sprites/environment/decor_altar_stone.tres",
+      "frame_size": [32, 32],
+      "frames": 4,
+      "fps": 5,
+      "loop": true,
+      "origin": [16, 32],
+      "notes": "two candles flicker on top",
+      "mount": "floor"
+    },
+    "decor_chest_closed": {
+      "png": "res://assets/sprites/environment/decor_chest_closed.png",
+      "size": [32, 32],
+      "origin": [16, 32],
+      "mount": "floor"
+    },
+    "decor_chest_open": {
+      "png": "res://assets/sprites/environment/decor_chest_open.png",
+      "size": [32, 32],
+      "origin": [16, 32],
+      "mount": "floor"
+    },
+    "decor_chest_trapped": {
+      "png": "res://assets/sprites/environment/decor_chest_trapped.png",
+      "size": [32, 32],
+      "origin": [16, 32],
+      "mount": "floor"
+    },
+    "decor_chest_opening": {
+      "sheet": "res://assets/sprites/environment/decor_chest_opening.png",
+      "sprite_frames": "res://assets/sprites/environment/decor_chest_opening.tres",
+      "frame_size": [32, 32],
+      "frames": 4,
+      "fps": 6,
+      "loop": false,
+      "origin": [16, 32],
+      "notes": "closed, lid cracked, lid swinging, open; play once",
+      "mount": "floor"
+    }
+  },
+  "effects": {
+    "fx_fire_loop": {
+      "sheet": "res://assets/sprites/environment/fx_fire_loop.png",
+      "sprite_frames": "res://assets/sprites/environment/fx_fire_loop.tres",
+      "frame_size": [16, 24],
+      "frames": 6,
+      "fps": 6,
+      "loop": true,
+      "origin": [8, 24],
+      "notes": "a ground fire; pair with a PointLight2D"
+    },
+    "fx_smoke_loop": {
+      "sheet": "res://assets/sprites/environment/fx_smoke_loop.png",
+      "sprite_frames": "res://assets/sprites/environment/fx_smoke_loop.tres",
+      "frame_size": [16, 32],
+      "frames": 6,
+      "fps": 5,
+      "loop": true,
+      "origin": [8, 32],
+      "notes": "translucent; set the bottom on the source (torch, brazier, fire)"
+    },
+    "fx_fog_a": {
+      "png": "res://assets/sprites/environment/fx_fog_a.png",
+      "size": [64, 64],
+      "origin": [32, 64],
+      "notes": "tileable 64x64 mist; repeat it (texture_repeat) and scroll slowly"
+    },
+    "fx_fog_b": {
+      "png": "res://assets/sprites/environment/fx_fog_b.png",
+      "size": [64, 64],
+      "origin": [32, 64],
+      "notes": "a thinner tileable layer to scroll over fx_fog_a"
+    },
+    "fx_blood_a": {
+      "png": "res://assets/sprites/environment/fx_blood_a.png",
+      "size": [16, 16],
+      "origin": [8, 16],
+      "notes": "floor decal, no outline"
+    },
+    "fx_blood_b": {
+      "png": "res://assets/sprites/environment/fx_blood_b.png",
+      "size": [16, 16],
+      "origin": [8, 16],
+      "notes": "floor decal, no outline"
+    },
+    "fx_blood_c": {
+      "png": "res://assets/sprites/environment/fx_blood_c.png",
+      "size": [16, 16],
+      "origin": [8, 16],
+      "notes": "floor decal, no outline"
+    },
+    "fx_blood_d": {
+      "png": "res://assets/sprites/environment/fx_blood_d.png",
+      "size": [16, 16],
+      "origin": [8, 16],
+      "notes": "floor decal, no outline"
+    },
+    "light_torch": {
+      "png": "res://assets/sprites/environment/light_torch.png",
+      "size": [128, 128],
+      "notes": "PointLight2D texture: white, stepped alpha falloff with dithered band edges. Not palette art. texture_scale 1.5 gives about a 6-tile radius."
+    }
+  }
+}

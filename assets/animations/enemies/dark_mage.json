@@ -1,0 +1,148 @@
+{
+  "name": "dark_mage",
+  "frame_size": [
+    32,
+    48
+  ],
+  "origin": [
+    16,
+    46
+  ],
+  "godot_offset": [
+    0,
+    -22
+  ],
+  "notes": "Caster: a hooded sorcerer in purple robes, yellow eyes in a shadowed hood, a staff with a glowing orb. Attack raises the staff and throws a shadow bolt. Special: blink (dissolves into magic haze and reforms).",
+  "sheets": {
+    "normal": "res://assets/sprites/enemies/char_dark_mage_normal.png"
+  },
+  "sprite_frames": {
+    "normal": "res://assets/sprites/enemies/char_dark_mage_normal.tres"
+  },
+  "animations": {
+    "idle": {
+      "fps": 5,
+      "loop": true,
+      "directions": {
+        "down": {
+          "row": 0,
+          "frames": 4
+        },
+        "up": {
+          "row": 1,
+          "frames": 4
+        },
+        "left": {
+          "row": 2,
+          "frames": 4
+        },
+        "right": {
+          "row": 3,
+          "frames": 4
+        }
+      }
+    },
+    "walk": {
+      "fps": 8,
+      "loop": true,
+      "directions": {
+        "down": {
+          "row": 4,
+          "frames": 8
+        },
+        "up": {
+          "row": 5,
+          "frames": 8
+        },
+        "left": {
+          "row": 6,
+          "frames": 8
+        },
+        "right": {
+          "row": 7,
+          "frames": 8
+        }
+      }
+    },
+    "attack": {
+      "fps": 10,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 8,
+          "frames": 6
+        },
+        "up": {
+          "row": 9,
+          "frames": 6
+        },
+        "left": {
+          "row": 10,
+          "frames": 6
+        },
+        "right": {
+          "row": 11,
+          "frames": 6
+        }
+      }
+    },
+    "special": {
+      "fps": 10,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 12,
+          "frames": 10
+        },
+        "up": {
+          "row": 13,
+          "frames": 10
+        },
+        "left": {
+          "row": 14,
+          "frames": 10
+        },
+        "right": {
+          "row": 15,
+          "frames": 10
+        }
+      }
+    },
+    "death": {
+      "fps": 8,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 16,
+          "frames": 6
+        },
+        "up": {
+          "row": 17,
+          "frames": 6
+        },
+        "left": {
+          "row": 18,
+          "frames": 6
+        },
+        "right": {
+          "row": 19,
+          "frames": 6
+        }
+      }
+    }
+  },
+  "effects": {
+    "shadow_bolt": {
+      "sheet": "res://assets/sprites/enemies/fx_dark_mage_shadow_bolt.png",
+      "sprite_frames": "res://assets/sprites/enemies/fx_dark_mage_shadow_bolt.tres",
+      "frame_size": [
+        20,
+        10
+      ],
+      "frames": 4,
+      "fps": 10,
+      "loop": true,
+      "notes": "Projectile: a knot of shadow with a lilac rim, flying right."
+    }
+  }
+}

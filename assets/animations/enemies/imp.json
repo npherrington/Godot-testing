@@ -1,0 +1,148 @@
+{
+  "name": "imp",
+  "frame_size": [
+    32,
+    48
+  ],
+  "origin": [
+    16,
+    46
+  ],
+  "godot_offset": [
+    0,
+    -22
+  ],
+  "notes": "Fireball caster: a small red devil with ivory horns, purple bat wings, a spade tail and a wide grin, hovering. attack: hurls a fireball (fx fireball). Special: blink (vanishes in a puff of smoke and reappears).",
+  "sheets": {
+    "normal": "res://assets/sprites/enemies/char_imp_normal.png"
+  },
+  "sprite_frames": {
+    "normal": "res://assets/sprites/enemies/char_imp_normal.tres"
+  },
+  "animations": {
+    "idle": {
+      "fps": 8,
+      "loop": true,
+      "directions": {
+        "down": {
+          "row": 0,
+          "frames": 4
+        },
+        "up": {
+          "row": 1,
+          "frames": 4
+        },
+        "left": {
+          "row": 2,
+          "frames": 4
+        },
+        "right": {
+          "row": 3,
+          "frames": 4
+        }
+      }
+    },
+    "walk": {
+      "fps": 10,
+      "loop": true,
+      "directions": {
+        "down": {
+          "row": 4,
+          "frames": 8
+        },
+        "up": {
+          "row": 5,
+          "frames": 8
+        },
+        "left": {
+          "row": 6,
+          "frames": 8
+        },
+        "right": {
+          "row": 7,
+          "frames": 8
+        }
+      }
+    },
+    "attack": {
+      "fps": 10,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 8,
+          "frames": 6
+        },
+        "up": {
+          "row": 9,
+          "frames": 6
+        },
+        "left": {
+          "row": 10,
+          "frames": 6
+        },
+        "right": {
+          "row": 11,
+          "frames": 6
+        }
+      }
+    },
+    "special": {
+      "fps": 10,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 12,
+          "frames": 10
+        },
+        "up": {
+          "row": 13,
+          "frames": 10
+        },
+        "left": {
+          "row": 14,
+          "frames": 10
+        },
+        "right": {
+          "row": 15,
+          "frames": 10
+        }
+      }
+    },
+    "death": {
+      "fps": 9,
+      "loop": false,
+      "directions": {
+        "down": {
+          "row": 16,
+          "frames": 6
+        },
+        "up": {
+          "row": 17,
+          "frames": 6
+        },
+        "left": {
+          "row": 18,
+          "frames": 6
+        },
+        "right": {
+          "row": 19,
+          "frames": 6
+        }
+      }
+    }
+  },
+  "effects": {
+    "fireball": {
+      "sheet": "res://assets/sprites/enemies/fx_imp_fireball.png",
+      "sprite_frames": "res://assets/sprites/enemies/fx_imp_fireball.tres",
+      "frame_size": [
+        16,
+        12
+      ],
+      "frames": 4,
+      "fps": 10,
+      "loop": true,
+      "notes": "Projectile flying right; rotate to the throw direction. Fire ramp with heat haze."
+    }
+  }
+}
